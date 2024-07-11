@@ -1,4 +1,0 @@
-/Users/montylee/NJUPT/Code/FileTag/cmake-build-debug/CMakeFiles/FileTag.dir
-/Users/montylee/NJUPT/Code/FileTag/cmake-build-debug/CMakeFiles/clean-all.dir
-/Users/montylee/NJUPT/Code/FileTag/cmake-build-debug/CMakeFiles/edit_cache.dir
-/Users/montylee/NJUPT/Code/FileTag/cmake-build-debug/CMakeFiles/rebuild_cache.dir
