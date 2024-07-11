@@ -59,23 +59,23 @@ void addTag(std::unordered_map<std::string, std::vector<std::string>>& tags, con
     tags[filepath].push_back(tag);
 }
 
-// 获取有效的文件路径
-std::string getValidFilePath() {
-    std::string filepath;
+// 获取有效的文件或文件夹路径
+std::string getValidPath() {
+    std::string path;
     while (true) {
-        std::cout << "请输入文件路径: ";
+        std::cout << "请输入文件或文件夹路径: ";
         std::cout.flush();  // 立即刷新缓冲区
-        std::cin >> filepath;
+        std::cin >> path;
 
-        // 检查文件路径是否存在
-        if (std::__fs::filesystem::exists(filepath)) {
+        // 检查路径是否存在
+        if (std::filesystem::exists(path)) {
             break;
         } else {
-            std::cerr << "文件路径不存在: " << filepath << std::endl;
+            std::cerr << "路径不存在: " << path << std::endl;
             std::cout.flush(); // 立即刷新缓冲区
         }
     }
-    return filepath;
+    return path;
 }
 
 // 获取标签
@@ -120,9 +120,37 @@ int main() {
         std::cin >> choice;
 
         if (choice == 1) {
-            std::string filepath = getValidFilePath();
-            std::string tag = getTag();
-            addTag(tags, filepath, tag);
+            std::string path = getValidPath();
+
+            if (std::filesystem::is_directory(path)) {
+                int tagChoice;
+                std::cout << "请选择操作：1. 给所有文件添加相同的标签 2. 每个文件单独添加标签" << std::endl;
+                std::cin >> tagChoice;
+
+                if (tagChoice == 1) {
+                    std::string tag = getTag();
+                    for (const auto& entry : std::filesystem::directory_iterator(path)) {
+                        if (entry.is_regular_file()) {
+                            addTag(tags, entry.path().string(), tag);
+                        }
+                    }
+                } else if (tagChoice == 2) {
+                    for (const auto& entry : std::filesystem::directory_iterator(path)) {
+                        if (entry.is_regular_file()) {
+                            std::cout << "文件: " << entry.path().string() << std::endl;
+                            std::string tag = getTag();
+                            addTag(tags, entry.path().string(), tag);
+                        }
+                    }
+                } else {
+                    std::cerr << "无效的选择。" << std::endl;
+                    continue;
+                }
+            } else {
+                std::string tag = getTag();
+                addTag(tags, path, tag);
+            }
+
             try {
                 saveTags(tags, tagsFile);
             } catch (const std::exception& e) {
