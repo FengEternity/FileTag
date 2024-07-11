@@ -7,7 +7,7 @@
 #include <filesystem>
 #include <stdexcept>
 
-// 从CSV文件加载标签
+// 加载标签
 std::unordered_map<std::string, std::vector<std::string>> loadTags(const std::string& filename) {
     std::unordered_map<std::string, std::vector<std::string>> tags;
     std::ifstream infile(filename);
@@ -37,7 +37,7 @@ std::unordered_map<std::string, std::vector<std::string>> loadTags(const std::st
     return tags;
 }
 
-// 保存标签到CSV文件
+// 保存标签
 void saveTags(const std::unordered_map<std::string, std::vector<std::string>>& tags, const std::string& filename) {
     std::ofstream outfile(filename);
 
@@ -54,7 +54,7 @@ void saveTags(const std::unordered_map<std::string, std::vector<std::string>>& t
     }
 }
 
-// 添加标签到文件
+// 添加标签
 void addTag(std::unordered_map<std::string, std::vector<std::string>>& tags, const std::string& filepath, const std::string& tag) {
     tags[filepath].push_back(tag);
 }
@@ -64,6 +64,7 @@ std::string getValidFilePath() {
     std::string filepath;
     while (true) {
         std::cout << "请输入文件路径: ";
+        std::cout.flush();  // 立即刷新缓冲区
         std::cin >> filepath;
 
         // 检查文件路径是否存在
@@ -71,6 +72,7 @@ std::string getValidFilePath() {
             break;
         } else {
             std::cerr << "文件路径不存在: " << filepath << std::endl;
+            std::cout.flush(); // 立即刷新缓冲区
         }
     }
     return filepath;
@@ -80,13 +82,29 @@ std::string getValidFilePath() {
 std::string getTag() {
     std::string tag;
     std::cout << "请输入要添加的标签: ";
+    std::cout.flush();  // 立即刷新缓冲区
     std::cin >> tag;
     return tag;
 }
 
+// 根据标签搜索文件
+std::vector<std::string> searchFilesByTag(const std::unordered_map<std::string, std::vector<std::string>>& tags, const std::string& tag) {
+    std::vector<std::string> filepaths;
+    for (const auto& [filepath, fileTags] : tags) {
+        if (std::find(fileTags.begin(), fileTags.end(), tag) != fileTags.end()) {
+            filepaths.push_back(filepath);
+        }
+    }
+    return filepaths;
+}
+
 int main() {
+    // 将 std::cerr 重定向到 std::cout
+    std::cerr.rdbuf(std::cout.rdbuf());
+
     const std::string tagsFile = "tags.csv";
     std::cout << "标签文件路径: " << tagsFile << std::endl;
+    std::cout.flush();  // 立即刷新缓冲区
 
     std::unordered_map<std::string, std::vector<std::string>> tags;
     try {
@@ -96,18 +114,40 @@ int main() {
         return 1;
     }
 
-    std::string filepath = getValidFilePath();
-    std::string tag = getTag();
+    while (true) {
+        int choice;
+        std::cout << "请选择操作：1. 添加标签 2. 根据标签搜索文件 3. 退出" << std::endl;
+        std::cin >> choice;
 
-    addTag(tags, filepath, tag);
-
-    try {
-        saveTags(tags, tagsFile);
-    } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return 1;
+        if (choice == 1) {
+            std::string filepath = getValidFilePath();
+            std::string tag = getTag();
+            addTag(tags, filepath, tag);
+            try {
+                saveTags(tags, tagsFile);
+            } catch (const std::exception& e) {
+                std::cerr << e.what() << std::endl;
+                return 1;
+            }
+            std::cout << "标签添加成功！" << std::endl;
+        } else if (choice == 2) {
+            std::string tag = getTag();
+            std::vector<std::string> filepaths = searchFilesByTag(tags, tag);
+            if (filepaths.empty()) {
+                std::cout << "没有找到匹配的文件。" << std::endl;
+            } else {
+                std::cout << "匹配的文件路径：" << std::endl;
+                for (const auto& filepath : filepaths) {
+                    std::cout << filepath << std::endl;
+                }
+            }
+        } else if (choice == 3) {
+            std::cout << "退出程序。" << std::endl;
+            break;
+        } else {
+            std::cerr << "无效的选择。" << std::endl;
+        }
     }
 
-    std::cout << "标签添加成功！" << std::endl;
     return 0;
 }
