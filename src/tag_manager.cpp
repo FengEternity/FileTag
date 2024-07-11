@@ -8,6 +8,7 @@
 #include <sstream>
 #include <filesystem>
 #include <stdexcept>
+#include <unordered_set>
 
 TagManager::TagManager(const std::string& filename) : filename(filename) {}
 
@@ -55,7 +56,22 @@ void TagManager::saveTags() const {
 }
 
 void TagManager::addTag(const std::string& filepath, const std::string& tag) {
-    tags[filepath].push_back(tag);
+    if (std::find(tags[filepath].begin(), tags[filepath].end(), tag) == tags[filepath].end()) {
+        tags[filepath].push_back(tag);
+    }
+}
+
+void TagManager::removeTag(const std::string& filepath, const std::string& tag) {
+    auto& fileTags = tags[filepath];
+    fileTags.erase(std::remove(fileTags.begin(), fileTags.end(), tag), fileTags.end());
+}
+
+void TagManager::updateTag(const std::string& filepath, const std::string& oldTag, const std::string& newTag) {
+    auto& fileTags = tags[filepath];
+    auto it = std::find(fileTags.begin(), fileTags.end(), oldTag);
+    if (it != fileTags.end()) {
+        *it = newTag;
+    }
 }
 
 std::vector<std::string> TagManager::searchFilesByTag(const std::string& tag) const {
@@ -66,6 +82,21 @@ std::vector<std::string> TagManager::searchFilesByTag(const std::string& tag) co
         }
     }
     return filepaths;
+}
+
+std::vector<std::string> TagManager::listAllTags() const {
+    std::unordered_set<std::string> allTags;
+    for (const auto& [filepath, fileTags] : tags) {
+        allTags.insert(fileTags.begin(), fileTags.end());
+    }
+    return std::vector<std::string>(allTags.begin(), allTags.end());
+}
+
+std::vector<std::string> TagManager::listTagsForFile(const std::string& filepath) const {
+    if (tags.find(filepath) != tags.end()) {
+        return tags.at(filepath);
+    }
+    return {};
 }
 
 std::string getValidPath() {
@@ -93,4 +124,3 @@ std::string getTag() {
     std::cin >> tag;
     return tag;
 }
-

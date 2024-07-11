@@ -20,7 +20,7 @@ int main() {
 
     while (true) {
         int choice;
-        std::cout << "请选择操作：1. 添加标签 2. 根据标签搜索文件 3. 退出" << std::endl;
+        std::cout << "请选择操作：\n1. 添加标签\n2. 根据标签搜索文件\n3. 删除标签\n4. 更新标签\n5. 查看所有标签\n6. 查看某个文件的标签\n7. 退出" << std::endl;
         std::cin >> choice;
 
         if (choice == 1) {
@@ -93,6 +93,52 @@ int main() {
                 }
             }
         } else if (choice == 3) {
+            std::string path = getValidPath();
+            std::string tag = getTag();
+            if (tag == "exit") {
+                continue;
+            }
+            tagManager.removeTag(path, tag);
+
+            try {
+                tagManager.saveTags();
+            } catch (const std::exception& e) {
+                std::cerr << e.what() << std::endl;
+                return 1;
+            }
+            std::cout << "标签删除成功！" << std::endl;
+        } else if (choice == 4) {
+            std::string path = getValidPath();
+            std::string oldTag = getTag();
+            if (oldTag == "exit") {
+                continue;
+            }
+            std::cout << "请输入新的标签: ";
+            std::string newTag;
+            std::cin >> newTag;
+            tagManager.updateTag(path, oldTag, newTag);
+
+            try {
+                tagManager.saveTags();
+            } catch (const std::exception& e) {
+                std::cerr << e.what() << std::endl;
+                return 1;
+            }
+            std::cout << "标签更新成功！" << std::endl;
+        } else if (choice == 5) {
+            auto tags = tagManager.listAllTags();
+            std::cout << "所有标签：" << std::endl;
+            for (const auto& tag : tags) {
+                std::cout << tag << std::endl;
+            }
+        } else if (choice == 6) {
+            std::string path = getValidPath();
+            auto tags = tagManager.listTagsForFile(path);
+            std::cout << "文件 " << path << " 的标签：" << std::endl;
+            for (const auto& tag : tags) {
+                std::cout << tag << std::endl;
+            }
+        } else if (choice == 7) {
             std::cout << "退出程序。" << std::endl;
             break;
         } else {
