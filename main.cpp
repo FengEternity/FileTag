@@ -81,7 +81,7 @@ std::string getValidPath() {
 // 获取标签
 std::string getTag() {
     std::string tag;
-    std::cout << "请输入要添加的标签: ";
+    std::cout << "请输入要添加的标签 (输入 'exit' 退出到主界面): ";
     std::cout.flush();  // 立即刷新缓冲区
     std::cin >> tag;
     return tag;
@@ -129,6 +129,9 @@ int main() {
 
                 if (tagChoice == 1) {
                     std::string tag = getTag();
+                    if (tag == "exit") {
+                        continue;
+                    }
                     for (const auto& entry : std::filesystem::directory_iterator(path)) {
                         if (entry.is_regular_file()) {
                             addTag(tags, entry.path().string(), tag);
@@ -139,6 +142,16 @@ int main() {
                         if (entry.is_regular_file()) {
                             std::cout << "文件: " << entry.path().string() << std::endl;
                             std::string tag = getTag();
+                            if (tag == "exit") {
+                                try {
+                                    saveTags(tags, tagsFile);
+                                } catch (const std::exception& e) {
+                                    std::cerr << e.what() << std::endl;
+                                    return 1;
+                                }
+                                std::cout << "已保存当前数据，返回主界面。" << std::endl;
+                                break;
+                            }
                             addTag(tags, entry.path().string(), tag);
                         }
                     }
@@ -148,6 +161,9 @@ int main() {
                 }
             } else {
                 std::string tag = getTag();
+                if (tag == "exit") {
+                    continue;
+                }
                 addTag(tags, path, tag);
             }
 
@@ -160,6 +176,9 @@ int main() {
             std::cout << "标签添加成功！" << std::endl;
         } else if (choice == 2) {
             std::string tag = getTag();
+            if (tag == "exit") {
+                continue;
+            }
             std::vector<std::string> filepaths = searchFilesByTag(tags, tag);
             if (filepaths.empty()) {
                 std::cout << "没有找到匹配的文件。" << std::endl;
