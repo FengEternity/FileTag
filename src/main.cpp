@@ -1,102 +1,6 @@
+#include "tag_manager.h"
 #include <iostream>
-#include <fstream>
-#include <string>
-#include <unordered_map>
-#include <vector>
-#include <sstream>
 #include <filesystem>
-#include <stdexcept>
-
-// 加载标签
-std::unordered_map<std::string, std::vector<std::string>> loadTags(const std::string& filename) {
-    std::unordered_map<std::string, std::vector<std::string>> tags;
-    std::ifstream infile(filename);
-    std::string line;
-
-    if (!infile.is_open()) {
-        std::cerr << "无法打开文件 " << filename << "，将创建一个新的文件。" << std::endl;
-        std::ofstream outfile(filename); // 创建一个新的CSV文件
-        if (!outfile.is_open()) {
-            throw std::runtime_error("无法创建文件 " + filename);
-        }
-        outfile.close();
-        return tags;
-    }
-
-    while (std::getline(infile, line)) {
-        std::istringstream iss(line);
-        std::string filepath, tag;
-        if (std::getline(iss, filepath, ',')) {
-            std::vector<std::string> fileTags;
-            while (std::getline(iss, tag, ',')) {
-                fileTags.push_back(tag);
-            }
-            tags[filepath] = fileTags;
-        }
-    }
-    return tags;
-}
-
-// 保存标签
-void saveTags(const std::unordered_map<std::string, std::vector<std::string>>& tags, const std::string& filename) {
-    std::ofstream outfile(filename);
-
-    if (!outfile.is_open()) {
-        throw std::runtime_error("无法打开文件 " + filename);
-    }
-
-    for (const auto& [filepath, fileTags] : tags) {
-        outfile << filepath;
-        for (const auto& tag : fileTags) {
-            outfile << "," << tag;
-        }
-        outfile << std::endl;
-    }
-}
-
-// 添加标签
-void addTag(std::unordered_map<std::string, std::vector<std::string>>& tags, const std::string& filepath, const std::string& tag) {
-    tags[filepath].push_back(tag);
-}
-
-// 获取有效的文件或文件夹路径
-std::string getValidPath() {
-    std::string path;
-    while (true) {
-        std::cout << "请输入文件或文件夹路径: ";
-        std::cout.flush();  // 立即刷新缓冲区
-        std::cin >> path;
-
-        // 检查路径是否存在
-        if (std::filesystem::exists(path)) {
-            break;
-        } else {
-            std::cerr << "路径不存在: " << path << std::endl;
-            std::cout.flush(); // 立即刷新缓冲区
-        }
-    }
-    return path;
-}
-
-// 获取标签
-std::string getTag() {
-    std::string tag;
-    std::cout << "请输入要添加的标签 (输入 'exit' 退出到主界面): ";
-    std::cout.flush();  // 立即刷新缓冲区
-    std::cin >> tag;
-    return tag;
-}
-
-// 根据标签搜索文件
-std::vector<std::string> searchFilesByTag(const std::unordered_map<std::string, std::vector<std::string>>& tags, const std::string& tag) {
-    std::vector<std::string> filepaths;
-    for (const auto& [filepath, fileTags] : tags) {
-        if (std::find(fileTags.begin(), fileTags.end(), tag) != fileTags.end()) {
-            filepaths.push_back(filepath);
-        }
-    }
-    return filepaths;
-}
 
 int main() {
     // 将 std::cerr 重定向到 std::cout
@@ -106,9 +10,9 @@ int main() {
     std::cout << "标签文件路径: " << tagsFile << std::endl;
     std::cout.flush();  // 立即刷新缓冲区
 
-    std::unordered_map<std::string, std::vector<std::string>> tags;
+    TagManager tagManager(tagsFile);
     try {
-        tags = loadTags(tagsFile);
+        tagManager.loadTags();
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
         return 1;
@@ -134,7 +38,7 @@ int main() {
                     }
                     for (const auto& entry : std::filesystem::directory_iterator(path)) {
                         if (entry.is_regular_file()) {
-                            addTag(tags, entry.path().string(), tag);
+                            tagManager.addTag(entry.path().string(), tag);
                         }
                     }
                 } else if (tagChoice == 2) {
@@ -144,7 +48,7 @@ int main() {
                             std::string tag = getTag();
                             if (tag == "exit") {
                                 try {
-                                    saveTags(tags, tagsFile);
+                                    tagManager.saveTags();
                                 } catch (const std::exception& e) {
                                     std::cerr << e.what() << std::endl;
                                     return 1;
@@ -152,7 +56,7 @@ int main() {
                                 std::cout << "已保存当前数据，返回主界面。" << std::endl;
                                 break;
                             }
-                            addTag(tags, entry.path().string(), tag);
+                            tagManager.addTag(entry.path().string(), tag);
                         }
                     }
                 } else {
@@ -164,11 +68,11 @@ int main() {
                 if (tag == "exit") {
                     continue;
                 }
-                addTag(tags, path, tag);
+                tagManager.addTag(path, tag);
             }
 
             try {
-                saveTags(tags, tagsFile);
+                tagManager.saveTags();
             } catch (const std::exception& e) {
                 std::cerr << e.what() << std::endl;
                 return 1;
@@ -179,7 +83,7 @@ int main() {
             if (tag == "exit") {
                 continue;
             }
-            std::vector<std::string> filepaths = searchFilesByTag(tags, tag);
+            std::vector<std::string> filepaths = tagManager.searchFilesByTag(tag);
             if (filepaths.empty()) {
                 std::cout << "没有找到匹配的文件。" << std::endl;
             } else {

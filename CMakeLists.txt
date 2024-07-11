@@ -5,7 +5,9 @@ project(FileTag)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(FileTag main.cpp)
+add_executable(FileTag src/main.cpp
+        src/tag_manager.cpp
+        src/tag_manager.h)
 
 # 添加自定义清理目标
 add_custom_target(clean-all
