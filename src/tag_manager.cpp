@@ -5,7 +5,7 @@
 #include <filesystem>
 #include <stdexcept>
 #include <unordered_set>
-#include <algorithm> // ÒıÈë algorithm Í·ÎÄ¼şÒÔÊ¹ÓÃ std::find ºÍ std::remove
+#include <algorithm> // å¼•å…¥ algorithm å¤´æ–‡ä»¶ä»¥ä½¿ç”¨ std::find å’Œ std::remove
 
 TagManager::TagManager(const std::string& filename) : filename(filename) {}
 
@@ -14,10 +14,10 @@ void TagManager::loadTags() {
     std::string line;
 
     if (!infile.is_open()) {
-        std::cerr << "ÎŞ·¨´ò¿ªÎÄ¼ş " << filename << "£¬½«´´½¨Ò»¸öĞÂµÄÎÄ¼ş¡£" << std::endl;
-        std::ofstream outfile(filename); // ´´½¨Ò»¸öĞÂµÄCSVÎÄ¼ş
+        std::cerr << "æ— æ³•æ‰“å¼€æ–‡ä»¶ " << filename << "ï¼Œå°†åˆ›å»ºä¸€ä¸ªæ–°çš„æ–‡ä»¶ã€‚" << std::endl;
+        std::ofstream outfile(filename); // åˆ›å»ºä¸€ä¸ªæ–°çš„CSVæ–‡ä»¶
         if (!outfile.is_open()) {
-            throw std::runtime_error("ÎŞ·¨´´½¨ÎÄ¼ş " + filename);
+            throw std::runtime_error("æ— æ³•åˆ›å»ºæ–‡ä»¶ " + filename);
         }
         outfile.close();
         return;
@@ -40,7 +40,7 @@ void TagManager::saveTags() const {
     std::ofstream outfile(filename);
 
     if (!outfile.is_open()) {
-        throw std::runtime_error("ÎŞ·¨´ò¿ªÎÄ¼ş " + filename);
+        throw std::runtime_error("æ— æ³•æ‰“å¼€æ–‡ä»¶ " + filename);
     }
 
     for (const auto& [filepath, fileTags] : tags) {
@@ -98,16 +98,16 @@ std::vector<std::string> TagManager::listTagsForFile(const std::string& filepath
 std::string getValidPath() {
     std::string path;
     while (true) {
-        std::cout << "ÇëÊäÈëÎÄ¼ş»òÎÄ¼ş¼ĞÂ·¾¶: ";
-        std::cout.flush();  // Á¢¼´Ë¢ĞÂ»º³åÇø
+        std::cout << "è¯·è¾“å…¥æ–‡ä»¶æˆ–æ–‡ä»¶å¤¹è·¯å¾„: ";
+        std::cout.flush();  // ç«‹å³åˆ·æ–°ç¼“å†²åŒº
         std::cin >> path;
 
-        // ¼ì²éÂ·¾¶ÊÇ·ñ´æÔÚ
+        // æ£€æŸ¥è·¯å¾„æ˜¯å¦å­˜åœ¨
         if (std::filesystem::exists(path)) {
             break;
         } else {
-            std::cerr << "Â·¾¶²»´æÔÚ: " << path << std::endl;
-            std::cout.flush(); // Á¢¼´Ë¢ĞÂ»º³åÇø
+            std::cerr << "è·¯å¾„ä¸å­˜åœ¨: " << path << std::endl;
+            std::cout.flush(); // ç«‹å³åˆ·æ–°ç¼“å†²åŒº
         }
     }
     return path;
@@ -115,8 +115,8 @@ std::string getValidPath() {
 
 std::string getTag() {
     std::string tag;
-    std::cout << "ÇëÊäÈëÒªÌí¼ÓµÄ±êÇ© (ÊäÈë 'exit' ÍË³öµ½Ö÷½çÃæ): ";
-    std::cout.flush();  // Á¢¼´Ë¢ĞÂ»º³åÇø
+    std::cout << "è¯·è¾“å…¥è¦æ·»åŠ çš„æ ‡ç­¾ (è¾“å…¥ 'exit' é€€å‡ºåˆ°ä¸»ç•Œé¢): ";
+    std::cout.flush();  // ç«‹å³åˆ·æ–°ç¼“å†²åŒº
     std::cin >> tag;
     return tag;
 }
