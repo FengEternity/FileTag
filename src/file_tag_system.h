@@ -2,6 +2,7 @@
 #define FILE_TAG_SYSTEM_H
 
 #include "tag_manager.h"
+#include <string>
 
 class FileTagSystem {
 public:
@@ -17,6 +18,10 @@ private:
     void updateTag();
     void listAllTags() const;
     void listTagsForFile() const;
+
+    std::string getValidInput(const std::string& prompt) const;
+    std::string getTag() const;
+    std::string getValidPath() const;
 
     TagManager tagManager;
 };

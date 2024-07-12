@@ -17,7 +17,6 @@ void FileTagSystem::run() {
         int choice;
         std::cin >> choice;
         handleChoice(choice);
-        if (choice == 7) break;
     }
 }
 
@@ -47,15 +46,58 @@ void FileTagSystem::handleChoice(int choice) {
             break;
         case 7:
             std::cout << "退出程序。" << std::endl;
-            break;
+            exit(0);
         default:
             std::cerr << "无效的选择。" << std::endl;
             break;
+    }
+
+    // 在每次操作后尝试保存标签
+    try {
+        tagManager.saveTags();
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+    }
+}
+
+std::string FileTagSystem::getValidInput(const std::string& prompt) const {
+    std::string input;
+    while (true) {
+        std::cout << prompt;
+        std::cin >> input;
+        if (input == "exit") {
+            return "";
+        } else if (!input.empty()) {
+            return input;
+        } else {
+            std::cerr << "输入不能为空，请重新输入。" << std::endl;
+        }
+    }
+}
+
+std::string FileTagSystem::getTag() const {
+    return getValidInput("请输入要添加的标签 (输入 'exit' 返回主界面): ");
+}
+
+std::string FileTagSystem::getValidPath() const {
+    std::string path;
+    while (true) {
+        std::cout << "请输入文件或文件夹路径 (输入 'exit' 返回主界面): ";
+        std::cin >> path;
+        if (path == "exit") {
+            return "";
+        }
+        if (std::filesystem::exists(path)) {
+            return path;
+        } else {
+            std::cerr << "路径不存在: " << path << std::endl;
+        }
     }
 }
 
 void FileTagSystem::addTags() {
     std::string path = getValidPath();
+    if (path.empty()) return;
 
     if (std::filesystem::is_directory(path)) {
         int tagChoice;
@@ -64,7 +106,7 @@ void FileTagSystem::addTags() {
 
         if (tagChoice == 1) {
             std::string tag = getTag();
-            if (tag == "exit") {
+            if (tag.empty()) {
                 return;
             }
             for (const auto& entry : std::filesystem::directory_iterator(path)) {
@@ -77,15 +119,8 @@ void FileTagSystem::addTags() {
                 if (entry.is_regular_file()) {
                     std::cout << "文件: " << entry.path().string() << std::endl;
                     std::string tag = getTag();
-                    if (tag == "exit") {
-                        try {
-                            tagManager.saveTags();
-                        } catch (const std::exception& e) {
-                            std::cerr << e.what() << std::endl;
-                            return;
-                        }
-                        std::cout << "已保存当前数据，返回主界面。" << std::endl;
-                        break;
+                    if (tag.empty()) {
+                        return;
                     }
                     tagManager.addTag(entry.path().string(), tag);
                 }
@@ -96,26 +131,17 @@ void FileTagSystem::addTags() {
         }
     } else {
         std::string tag = getTag();
-        if (tag == "exit") {
+        if (tag.empty()) {
             return;
         }
         tagManager.addTag(path, tag);
     }
-
-    try {
-        tagManager.saveTags();
-    } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return;
-    }
-    std::cout << "标签添加成功！" << std::endl;
 }
 
 void FileTagSystem::searchFilesByTag() {
     std::string tag = getTag();
-    if (tag == "exit") {
-        return;
-    }
+    if (tag.empty()) return;
+
     std::vector<std::string> filepaths = tagManager.searchFilesByTag(tag);
     if (filepaths.empty()) {
         std::cout << "没有找到匹配的文件。" << std::endl;
@@ -129,39 +155,25 @@ void FileTagSystem::searchFilesByTag() {
 
 void FileTagSystem::removeTag() {
     std::string path = getValidPath();
-    std::string tag = getTag();
-    if (tag == "exit") {
-        return;
-    }
-    tagManager.removeTag(path, tag);
+    if (path.empty()) return;
 
-    try {
-        tagManager.saveTags();
-    } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return;
-    }
-    std::cout << "标签删除成功！" << std::endl;
+    std::string tag = getTag();
+    if (tag.empty()) return;
+
+    tagManager.removeTag(path, tag);
 }
 
 void FileTagSystem::updateTag() {
     std::string path = getValidPath();
-    std::string oldTag = getTag();
-    if (oldTag == "exit") {
-        return;
-    }
-    std::cout << "请输入新的标签: ";
-    std::string newTag;
-    std::cin >> newTag;
-    tagManager.updateTag(path, oldTag, newTag);
+    if (path.empty()) return;
 
-    try {
-        tagManager.saveTags();
-    } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return;
-    }
-    std::cout << "标签更新成功！" << std::endl;
+    std::string oldTag = getTag();
+    if (oldTag.empty()) return;
+
+    std::string newTag = getValidInput("请输入新的标签 (输入 'exit' 返回主界面): ");
+    if (newTag.empty()) return;
+
+    tagManager.updateTag(path, oldTag, newTag);
 }
 
 void FileTagSystem::listAllTags() const {
@@ -174,6 +186,8 @@ void FileTagSystem::listAllTags() const {
 
 void FileTagSystem::listTagsForFile() const {
     std::string path = getValidPath();
+    if (path.empty()) return;
+
     auto tags = tagManager.listTagsForFile(path);
     std::cout << "文件 " << path << " 的标签：" << std::endl;
     for (const auto& tag : tags) {
