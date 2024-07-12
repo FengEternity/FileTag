@@ -5,7 +5,7 @@
 #include <filesystem>
 #include <stdexcept>
 #include <unordered_set>
-#include <algorithm> // 引入 algorithm 头文件以使用 std::find 和 std::remove
+#include <algorithm>
 
 TagManager::TagManager(const std::string& filename) : filename(filename) {}
 
@@ -99,15 +99,14 @@ std::string getValidPath() {
     std::string path;
     while (true) {
         std::cout << "请输入文件或文件夹路径: ";
-        std::cout.flush();  // 立即刷新缓冲区
+        std::cout.flush();
         std::cin >> path;
 
-        // 检查路径是否存在
         if (std::filesystem::exists(path)) {
             break;
         } else {
             std::cerr << "路径不存在: " << path << std::endl;
-            std::cout.flush(); // 立即刷新缓冲区
+            std::cout.flush();
         }
     }
     return path;
@@ -115,8 +114,16 @@ std::string getValidPath() {
 
 std::string getTag() {
     std::string tag;
-    std::cout << "请输入要添加的标签 (输入 'exit' 退出到主界面): ";
-    std::cout.flush();  // 立即刷新缓冲区
-    std::cin >> tag;
+    while (true) {
+        std::cout << "请输入要添加的标签 (输入 'exit' 退出到主界面): ";
+        std::cout.flush();
+        std::cin >> tag;
+
+        if (!tag.empty() && tag != "exit") {
+            break;
+        } else {
+            std::cerr << "标签不能为空，请重新输入。" << std::endl;
+        }
+    }
     return tag;
 }
