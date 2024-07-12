@@ -1,33 +1,129 @@
 #include "file_tag_system.h"
+#include "user_manager.h" // 添加这行确保包含 user_manager 头文件
 #include <iostream>
 #include <filesystem>
 
-// 构造函数，初始化标签管理器，并加载标签数据
+// 构造函数，初始化 FileTagSystem 对象
 FileTagSystem::FileTagSystem(const std::string& tagsFile) : tagManager(tagsFile) {
+    // 初始化用户管理器，添加一些默认用户
+    userManager.addUser("admin", "admin123", UserRole::ADMIN);
+    userManager.addUser("user", "user123", UserRole::USER);
+
     try {
-        tagManager.loadTags();  // 尝试加载标签
+        // 尝试加载标签
+        tagManager.loadTags();
     } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;  // 如果加载失败，输出错误信息并退出程序
+        // 如果加载失败，输出错误信息并退出程序
+        std::cerr << e.what() << std::endl;
         exit(1);
     }
 }
 
-// 主运行函数，显示主菜单并处理用户选择
+// 运行系统的主循环
 void FileTagSystem::run() {
+    // 用户登录
+    if (!login()) {
+        std::cerr << "登录失败，程序退出。" << std::endl;
+        return;
+    }
+
+    // 根据用户角色显示不同的菜单并处理选择
     while (true) {
-        displayMenu();
-        int choice;
-        std::cin >> choice;
-        handleChoice(choice);
+        if (currentUserRole == UserRole::ADMIN) {
+            displayAdminMenu();
+            int choice;
+            std::cin >> choice;
+            handleAdminChoice(choice);
+        } else {
+            displayMenu();
+            int choice;
+            std::cin >> choice;
+            handleChoice(choice);
+        }
     }
 }
 
-// 显示主菜单
-void FileTagSystem::displayMenu() const {
-    std::cout << "请选择操作：\n1. 添加标签\n2. 根据标签搜索文件\n3. 删除标签\n4. 更新标签\n5. 查看所有标签\n6. 查看某个文件的标签\n7. 退出" << std::endl;
+// 用户登录函数
+bool FileTagSystem::login() {
+    std::string username, password;
+    std::cout << "请输入用户名: ";
+    std::cin >> username;
+    std::cout << "请输入密码: ";
+    std::cin >> password;
+
+    // 验证用户
+    if (userManager.authenticate(username, password)) {
+        currentUser = username;
+        currentUserRole = userManager.getUserRole(username);
+        return true;
+    }
+    return false;
 }
 
-// 处理用户的菜单选择
+// 显示管理员菜单
+void FileTagSystem::displayAdminMenu() const {
+    std::cout << "管理员菜单：\n1. 添加标签\n2. 根据标签搜索文件\n3. 删除标签\n4. 更新标签\n5. 查看所有标签\n6. 查看某个文件的标签\n7. 添加用户\n8. 退出" << std::endl;
+}
+
+// 处理管理员的选择
+void FileTagSystem::handleAdminChoice(int choice) {
+    switch (choice) {
+        case 1:
+            addTags();
+            break;
+        case 2:
+            searchFilesByTag();
+            break;
+        case 3:
+            removeTag();
+            break;
+        case 4:
+            updateTag();
+            break;
+        case 5:
+            listAllTags();
+            break;
+        case 6:
+            listTagsForFile();
+            break;
+        case 7: {
+            std::string username, password;
+            int role;
+            std::cout << "请输入新用户名: ";
+            std::cin >> username;
+            std::cout << "请输入密码: ";
+            std::cin >> password;
+            std::cout << "请选择角色 (0 - 管理员, 1 - 普通用户): ";
+            std::cin >> role;
+            if (userManager.addUser(username, password, static_cast<UserRole>(role))) {
+                std::cout << "用户添加成功。" << std::endl;
+            } else {
+                std::cerr << "用户已存在。" << std::endl;
+            }
+            break;
+        }
+        case 8:
+            std::cout << "退出程序。" << std::endl;
+            exit(0);
+        default:
+            std::cerr << "无效的选择。" << std::endl;
+            break;
+    }
+
+    // 保存标签数据
+    try {
+        tagManager.saveTags();
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+    }
+}
+
+// 显示普通用户菜单
+void FileTagSystem::displayMenu() const {
+    std::cout << "用户菜单：\n1. 添加标签\n2. 根据标签搜索文件\n3. 删除标签\n4. 更新标签\n5. 查看所有标签\n6. 查看某个文件的标签\n7. 退出" << std::endl;
+}
+
+// 处理普通用户的选择
 void FileTagSystem::handleChoice(int choice) {
     switch (choice) {
         case 1:
@@ -56,7 +152,7 @@ void FileTagSystem::handleChoice(int choice) {
             break;
     }
 
-    // 在每次操作后尝试保存标签
+    // 保存标签数据
     try {
         tagManager.saveTags();
     } catch (const std::exception& e) {

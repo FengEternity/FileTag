@@ -2,6 +2,7 @@
 #define FILE_TAG_SYSTEM_H
 
 #include "tag_manager.h"
+#include "user_manager.h"  // 新增的用户管理头文件
 #include <string>
 
 class FileTagSystem {
@@ -29,15 +30,22 @@ private:
     // 列出某个文件的所有标签的函数
     void listTagsForFile() const;
 
+    // 新增的用户登录和管理函数
+    bool login();
+    void displayAdminMenu() const;
+    void handleAdminChoice(int choice);
+
+    TagManager tagManager;
+    UserManager userManager;  // 用户管理对象
+    std::string currentUser;  // 当前用户名
+    UserRole currentUserRole; // 当前用户角色
+
     // 获取有效用户输入的函数，带有提示信息
     std::string getValidInput(const std::string& prompt) const;
     // 获取标签输入的函数
     std::string getTag() const;
     // 获取有效路径输入的函数
     std::string getValidPath() const;
-
-    // 标签管理器对象
-    TagManager tagManager;
 };
 
 #endif // FILE_TAG_SYSTEM_H
