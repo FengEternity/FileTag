@@ -3,12 +3,12 @@
 #include <filesystem>
 
 int main() {
-    // å°† std::cerr é‡å®šå‘åˆ° std::cout
+    // ½« std::cerr ÖØ¶¨Ïòµ½ std::cout
     std::cerr.rdbuf(std::cout.rdbuf());
 
     const std::string tagsFile = "tags.csv";
-    std::cout << "æ ‡ç­¾æ–‡ä»¶è·¯å¾„: " << tagsFile << std::endl;
-    std::cout.flush();  // ç«‹å³åˆ·æ–°ç¼“å†²åŒº
+    std::cout << "±êÇ©ÎÄ¼şÂ·¾¶: " << tagsFile << std::endl;
+    std::cout.flush();  // Á¢¼´Ë¢ĞÂ»º³åÇø
 
     TagManager tagManager(tagsFile);
     try {
@@ -20,7 +20,7 @@ int main() {
 
     while (true) {
         int choice;
-        std::cout << "è¯·é€‰æ‹©æ“ä½œï¼š\n1. æ·»åŠ æ ‡ç­¾\n2. æ ¹æ®æ ‡ç­¾æœç´¢æ–‡ä»¶\n3. åˆ é™¤æ ‡ç­¾\n4. æ›´æ–°æ ‡ç­¾\n5. æŸ¥çœ‹æ‰€æœ‰æ ‡ç­¾\n6. æŸ¥çœ‹æŸä¸ªæ–‡ä»¶çš„æ ‡ç­¾\n7. é€€å‡º" << std::endl;
+        std::cout << "ÇëÑ¡Ôñ²Ù×÷£º\n1. Ìí¼Ó±êÇ©\n2. ¸ù¾İ±êÇ©ËÑË÷ÎÄ¼ş\n3. É¾³ı±êÇ©\n4. ¸üĞÂ±êÇ©\n5. ²é¿´ËùÓĞ±êÇ©\n6. ²é¿´Ä³¸öÎÄ¼şµÄ±êÇ©\n7. ÍË³ö" << std::endl;
         std::cin >> choice;
 
         if (choice == 1) {
@@ -28,7 +28,7 @@ int main() {
 
             if (std::filesystem::is_directory(path)) {
                 int tagChoice;
-                std::cout << "è¯·é€‰æ‹©æ“ä½œï¼š1. ç»™æ‰€æœ‰æ–‡ä»¶æ·»åŠ ç›¸åŒçš„æ ‡ç­¾ 2. æ¯ä¸ªæ–‡ä»¶å•ç‹¬æ·»åŠ æ ‡ç­¾" << std::endl;
+                std::cout << "ÇëÑ¡Ôñ²Ù×÷£º1. ¸øËùÓĞÎÄ¼şÌí¼ÓÏàÍ¬µÄ±êÇ© 2. Ã¿¸öÎÄ¼şµ¥¶ÀÌí¼Ó±êÇ©" << std::endl;
                 std::cin >> tagChoice;
 
                 if (tagChoice == 1) {
@@ -44,7 +44,7 @@ int main() {
                 } else if (tagChoice == 2) {
                     for (const auto& entry : std::filesystem::directory_iterator(path)) {
                         if (entry.is_regular_file()) {
-                            std::cout << "æ–‡ä»¶: " << entry.path().string() << std::endl;
+                            std::cout << "ÎÄ¼ş: " << entry.path().string() << std::endl;
                             std::string tag = getTag();
                             if (tag == "exit") {
                                 try {
@@ -53,14 +53,14 @@ int main() {
                                     std::cerr << e.what() << std::endl;
                                     return 1;
                                 }
-                                std::cout << "å·²ä¿å­˜å½“å‰æ•°æ®ï¼Œè¿”å›ä¸»ç•Œé¢ã€‚" << std::endl;
+                                std::cout << "ÒÑ±£´æµ±Ç°Êı¾İ£¬·µ»ØÖ÷½çÃæ¡£" << std::endl;
                                 break;
                             }
                             tagManager.addTag(entry.path().string(), tag);
                         }
                     }
                 } else {
-                    std::cerr << "æ— æ•ˆçš„é€‰æ‹©ã€‚" << std::endl;
+                    std::cerr << "ÎŞĞ§µÄÑ¡Ôñ¡£" << std::endl;
                     continue;
                 }
             } else {
@@ -77,7 +77,7 @@ int main() {
                 std::cerr << e.what() << std::endl;
                 return 1;
             }
-            std::cout << "æ ‡ç­¾æ·»åŠ æˆåŠŸï¼" << std::endl;
+            std::cout << "±êÇ©Ìí¼Ó³É¹¦£¡" << std::endl;
         } else if (choice == 2) {
             std::string tag = getTag();
             if (tag == "exit") {
@@ -85,9 +85,9 @@ int main() {
             }
             std::vector<std::string> filepaths = tagManager.searchFilesByTag(tag);
             if (filepaths.empty()) {
-                std::cout << "æ²¡æœ‰æ‰¾åˆ°åŒ¹é…çš„æ–‡ä»¶ã€‚" << std::endl;
+                std::cout << "Ã»ÓĞÕÒµ½Æ¥ÅäµÄÎÄ¼ş¡£" << std::endl;
             } else {
-                std::cout << "åŒ¹é…çš„æ–‡ä»¶è·¯å¾„ï¼š" << std::endl;
+                std::cout << "Æ¥ÅäµÄÎÄ¼şÂ·¾¶£º" << std::endl;
                 for (const auto& filepath : filepaths) {
                     std::cout << filepath << std::endl;
                 }
@@ -106,14 +106,14 @@ int main() {
                 std::cerr << e.what() << std::endl;
                 return 1;
             }
-            std::cout << "æ ‡ç­¾åˆ é™¤æˆåŠŸï¼" << std::endl;
+            std::cout << "±êÇ©É¾³ı³É¹¦£¡" << std::endl;
         } else if (choice == 4) {
             std::string path = getValidPath();
             std::string oldTag = getTag();
             if (oldTag == "exit") {
                 continue;
             }
-            std::cout << "è¯·è¾“å…¥æ–°çš„æ ‡ç­¾: ";
+            std::cout << "ÇëÊäÈëĞÂµÄ±êÇ©: ";
             std::string newTag;
             std::cin >> newTag;
             tagManager.updateTag(path, oldTag, newTag);
@@ -124,25 +124,25 @@ int main() {
                 std::cerr << e.what() << std::endl;
                 return 1;
             }
-            std::cout << "æ ‡ç­¾æ›´æ–°æˆåŠŸï¼" << std::endl;
+            std::cout << "±êÇ©¸üĞÂ³É¹¦£¡" << std::endl;
         } else if (choice == 5) {
             auto tags = tagManager.listAllTags();
-            std::cout << "æ‰€æœ‰æ ‡ç­¾ï¼š" << std::endl;
+            std::cout << "ËùÓĞ±êÇ©£º" << std::endl;
             for (const auto& tag : tags) {
                 std::cout << tag << std::endl;
             }
         } else if (choice == 6) {
             std::string path = getValidPath();
             auto tags = tagManager.listTagsForFile(path);
-            std::cout << "æ–‡ä»¶ " << path << " çš„æ ‡ç­¾ï¼š" << std::endl;
+            std::cout << "ÎÄ¼ş " << path << " µÄ±êÇ©£º" << std::endl;
             for (const auto& tag : tags) {
                 std::cout << tag << std::endl;
             }
         } else if (choice == 7) {
-            std::cout << "é€€å‡ºç¨‹åºã€‚" << std::endl;
+            std::cout << "ÍË³ö³ÌĞò¡£" << std::endl;
             break;
         } else {
-            std::cerr << "æ— æ•ˆçš„é€‰æ‹©ã€‚" << std::endl;
+            std::cerr << "ÎŞĞ§µÄÑ¡Ôñ¡£" << std::endl;
         }
     }
 

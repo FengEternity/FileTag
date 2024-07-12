@@ -1,7 +1,3 @@
-//
-// Created by Monty-Lee  on 24-7-11.
-//
-
 #include "tag_manager.h"
 #include <iostream>
 #include <fstream>
@@ -9,6 +5,7 @@
 #include <filesystem>
 #include <stdexcept>
 #include <unordered_set>
+#include <algorithm> // ÒıÈë algorithm Í·ÎÄ¼şÒÔÊ¹ÓÃ std::find ºÍ std::remove
 
 TagManager::TagManager(const std::string& filename) : filename(filename) {}
 
@@ -17,10 +14,10 @@ void TagManager::loadTags() {
     std::string line;
 
     if (!infile.is_open()) {
-        std::cerr << "æ— æ³•æ‰“å¼€æ–‡ä»¶ " << filename << "ï¼Œå°†åˆ›å»ºä¸€ä¸ªæ–°çš„æ–‡ä»¶ã€‚" << std::endl;
-        std::ofstream outfile(filename); // åˆ›å»ºä¸€ä¸ªæ–°çš„CSVæ–‡ä»¶
+        std::cerr << "ÎŞ·¨´ò¿ªÎÄ¼ş " << filename << "£¬½«´´½¨Ò»¸öĞÂµÄÎÄ¼ş¡£" << std::endl;
+        std::ofstream outfile(filename); // ´´½¨Ò»¸öĞÂµÄCSVÎÄ¼ş
         if (!outfile.is_open()) {
-            throw std::runtime_error("æ— æ³•åˆ›å»ºæ–‡ä»¶ " + filename);
+            throw std::runtime_error("ÎŞ·¨´´½¨ÎÄ¼ş " + filename);
         }
         outfile.close();
         return;
@@ -43,7 +40,7 @@ void TagManager::saveTags() const {
     std::ofstream outfile(filename);
 
     if (!outfile.is_open()) {
-        throw std::runtime_error("æ— æ³•æ‰“å¼€æ–‡ä»¶ " + filename);
+        throw std::runtime_error("ÎŞ·¨´ò¿ªÎÄ¼ş " + filename);
     }
 
     for (const auto& [filepath, fileTags] : tags) {
@@ -67,9 +64,8 @@ void TagManager::removeTag(const std::string& filepath, const std::string& tag) 
 }
 
 void TagManager::updateTag(const std::string& filepath, const std::string& oldTag, const std::string& newTag) {
-    auto& fileTags = tags[filepath];
-    auto it = std::find(fileTags.begin(), fileTags.end(), oldTag);
-    if (it != fileTags.end()) {
+    auto it = std::find(tags[filepath].begin(), tags[filepath].end(), oldTag);
+    if (it != tags[filepath].end()) {
         *it = newTag;
     }
 }
@@ -102,16 +98,16 @@ std::vector<std::string> TagManager::listTagsForFile(const std::string& filepath
 std::string getValidPath() {
     std::string path;
     while (true) {
-        std::cout << "è¯·è¾“å…¥æ–‡ä»¶æˆ–æ–‡ä»¶å¤¹è·¯å¾„: ";
-        std::cout.flush();  // ç«‹å³åˆ·æ–°ç¼“å†²åŒº
+        std::cout << "ÇëÊäÈëÎÄ¼ş»òÎÄ¼ş¼ĞÂ·¾¶: ";
+        std::cout.flush();  // Á¢¼´Ë¢ĞÂ»º³åÇø
         std::cin >> path;
 
-        // æ£€æŸ¥è·¯å¾„æ˜¯å¦å­˜åœ¨
+        // ¼ì²éÂ·¾¶ÊÇ·ñ´æÔÚ
         if (std::filesystem::exists(path)) {
             break;
         } else {
-            std::cerr << "è·¯å¾„ä¸å­˜åœ¨: " << path << std::endl;
-            std::cout.flush(); // ç«‹å³åˆ·æ–°ç¼“å†²åŒº
+            std::cerr << "Â·¾¶²»´æÔÚ: " << path << std::endl;
+            std::cout.flush(); // Á¢¼´Ë¢ĞÂ»º³åÇø
         }
     }
     return path;
@@ -119,8 +115,8 @@ std::string getValidPath() {
 
 std::string getTag() {
     std::string tag;
-    std::cout << "è¯·è¾“å…¥è¦æ·»åŠ çš„æ ‡ç­¾ (è¾“å…¥ 'exit' é€€å‡ºåˆ°ä¸»ç•Œé¢): ";
-    std::cout.flush();  // ç«‹å³åˆ·æ–°ç¼“å†²åŒº
+    std::cout << "ÇëÊäÈëÒªÌí¼ÓµÄ±êÇ© (ÊäÈë 'exit' ÍË³öµ½Ö÷½çÃæ): ";
+    std::cout.flush();  // Á¢¼´Ë¢ĞÂ»º³åÇø
     std::cin >> tag;
     return tag;
 }
