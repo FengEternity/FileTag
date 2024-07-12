@@ -7,8 +7,10 @@
 #include <unordered_set>
 #include <algorithm>
 
+// 构造函数，初始化标签文件名
 TagManager::TagManager(const std::string& filename) : filename(filename) {}
 
+// 加载标签
 void TagManager::loadTags() {
     std::ifstream infile(filename);
     std::string line;
@@ -36,6 +38,7 @@ void TagManager::loadTags() {
     }
 }
 
+// 保存标签
 void TagManager::saveTags() const {
     std::ofstream outfile(filename);
 
@@ -52,17 +55,20 @@ void TagManager::saveTags() const {
     }
 }
 
+// 添加标签
 void TagManager::addTag(const std::string& filepath, const std::string& tag) {
     if (std::find(tags[filepath].begin(), tags[filepath].end(), tag) == tags[filepath].end()) {
         tags[filepath].push_back(tag);
     }
 }
 
+// 删除标签
 void TagManager::removeTag(const std::string& filepath, const std::string& tag) {
     auto& fileTags = tags[filepath];
     fileTags.erase(std::remove(fileTags.begin(), fileTags.end(), tag), fileTags.end());
 }
 
+// 更新标签
 void TagManager::updateTag(const std::string& filepath, const std::string& oldTag, const std::string& newTag) {
     auto it = std::find(tags[filepath].begin(), tags[filepath].end(), oldTag);
     if (it != tags[filepath].end()) {
@@ -70,6 +76,7 @@ void TagManager::updateTag(const std::string& filepath, const std::string& oldTa
     }
 }
 
+// 根据标签搜索文件
 std::vector<std::string> TagManager::searchFilesByTag(const std::string& tag) const {
     std::vector<std::string> filepaths;
     for (const auto& [filepath, fileTags] : tags) {
@@ -80,6 +87,7 @@ std::vector<std::string> TagManager::searchFilesByTag(const std::string& tag) co
     return filepaths;
 }
 
+// 查看所有标签
 std::vector<std::string> TagManager::listAllTags() const {
     std::unordered_set<std::string> allTags;
     for (const auto& [filepath, fileTags] : tags) {
@@ -88,6 +96,7 @@ std::vector<std::string> TagManager::listAllTags() const {
     return std::vector<std::string>(allTags.begin(), allTags.end());
 }
 
+// 查看某个文件的标签
 std::vector<std::string> TagManager::listTagsForFile(const std::string& filepath) const {
     if (tags.find(filepath) != tags.end()) {
         return tags.at(filepath);
@@ -95,35 +104,30 @@ std::vector<std::string> TagManager::listTagsForFile(const std::string& filepath
     return {};
 }
 
+// 获取有效的路径输入
 std::string getValidPath() {
     std::string path;
     while (true) {
         std::cout << "请输入文件或文件夹路径: ";
-        std::cout.flush();
+        std::cout.flush();  // 立即刷新缓冲区
         std::cin >> path;
 
+        // 检查路径是否存在
         if (std::filesystem::exists(path)) {
             break;
         } else {
             std::cerr << "路径不存在: " << path << std::endl;
-            std::cout.flush();
+            std::cout.flush(); // 立即刷新缓冲区
         }
     }
     return path;
 }
 
+// 获取标签输入
 std::string getTag() {
     std::string tag;
-    while (true) {
-        std::cout << "请输入要添加的标签 (输入 'exit' 退出到主界面): ";
-        std::cout.flush();
-        std::cin >> tag;
-
-        if (!tag.empty() && tag != "exit") {
-            break;
-        } else {
-            std::cerr << "标签不能为空，请重新输入。" << std::endl;
-        }
-    }
+    std::cout << "请输入要添加的标签 (输入 'exit' 退出到主界面): ";
+    std::cout.flush();  // 立即刷新缓冲区
+    std::cin >> tag;
     return tag;
 }

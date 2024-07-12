@@ -2,15 +2,19 @@
 #include <iostream>
 #include <filesystem>
 
+// 构造函数，初始化标签管理器
 FileTagSystem::FileTagSystem(const std::string& tagsFile) : tagManager(tagsFile) {
     try {
+        // 尝试加载标签
         tagManager.loadTags();
     } catch (const std::exception& e) {
+        // 如果加载失败，输出错误信息并退出程序
         std::cerr << e.what() << std::endl;
         exit(1);
     }
 }
 
+// 运行主循环
 void FileTagSystem::run() {
     while (true) {
         displayMenu();
@@ -20,10 +24,12 @@ void FileTagSystem::run() {
     }
 }
 
+// 显示主菜单
 void FileTagSystem::displayMenu() const {
     std::cout << "请选择操作：\n1. 添加标签\n2. 根据标签搜索文件\n3. 删除标签\n4. 更新标签\n5. 查看所有标签\n6. 查看某个文件的标签\n7. 退出" << std::endl;
 }
 
+// 处理用户选择
 void FileTagSystem::handleChoice(int choice) {
     switch (choice) {
         case 1:
@@ -60,6 +66,7 @@ void FileTagSystem::handleChoice(int choice) {
     }
 }
 
+// 获取有效的用户输入
 std::string FileTagSystem::getValidInput(const std::string& prompt) const {
     std::string input;
     while (true) {
@@ -75,10 +82,12 @@ std::string FileTagSystem::getValidInput(const std::string& prompt) const {
     }
 }
 
+// 获取标签输入
 std::string FileTagSystem::getTag() const {
     return getValidInput("请输入要添加的标签 (输入 'exit' 返回主界面): ");
 }
 
+// 获取有效的路径输入
 std::string FileTagSystem::getValidPath() const {
     std::string path;
     while (true) {
@@ -95,6 +104,7 @@ std::string FileTagSystem::getValidPath() const {
     }
 }
 
+// 添加标签
 void FileTagSystem::addTags() {
     std::string path = getValidPath();
     if (path.empty()) return;
@@ -138,6 +148,7 @@ void FileTagSystem::addTags() {
     }
 }
 
+// 根据标签搜索文件
 void FileTagSystem::searchFilesByTag() {
     std::string tag = getTag();
     if (tag.empty()) return;
@@ -153,6 +164,7 @@ void FileTagSystem::searchFilesByTag() {
     }
 }
 
+// 删除标签
 void FileTagSystem::removeTag() {
     std::string path = getValidPath();
     if (path.empty()) return;
@@ -163,6 +175,7 @@ void FileTagSystem::removeTag() {
     tagManager.removeTag(path, tag);
 }
 
+// 更新标签
 void FileTagSystem::updateTag() {
     std::string path = getValidPath();
     if (path.empty()) return;
@@ -176,6 +189,7 @@ void FileTagSystem::updateTag() {
     tagManager.updateTag(path, oldTag, newTag);
 }
 
+// 查看所有标签
 void FileTagSystem::listAllTags() const {
     auto tags = tagManager.listAllTags();
     std::cout << "所有标签：" << std::endl;
@@ -184,6 +198,7 @@ void FileTagSystem::listAllTags() const {
     }
 }
 
+// 查看某个文件的标签
 void FileTagSystem::listTagsForFile() const {
     std::string path = getValidPath();
     if (path.empty()) return;
