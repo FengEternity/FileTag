@@ -2,19 +2,17 @@
 #include <iostream>
 #include <filesystem>
 
-// 构造函数，初始化标签管理器
+// 构造函数，初始化标签管理器，并加载标签数据
 FileTagSystem::FileTagSystem(const std::string& tagsFile) : tagManager(tagsFile) {
     try {
-        // 尝试加载标签
-        tagManager.loadTags();
+        tagManager.loadTags();  // 尝试加载标签
     } catch (const std::exception& e) {
-        // 如果加载失败，输出错误信息并退出程序
-        std::cerr << e.what() << std::endl;
+        std::cerr << e.what() << std::endl;  // 如果加载失败，输出错误信息并退出程序
         exit(1);
     }
 }
 
-// 运行主循环
+// 主运行函数，显示主菜单并处理用户选择
 void FileTagSystem::run() {
     while (true) {
         displayMenu();
@@ -29,7 +27,7 @@ void FileTagSystem::displayMenu() const {
     std::cout << "请选择操作：\n1. 添加标签\n2. 根据标签搜索文件\n3. 删除标签\n4. 更新标签\n5. 查看所有标签\n6. 查看某个文件的标签\n7. 退出" << std::endl;
 }
 
-// 处理用户选择
+// 处理用户的菜单选择
 void FileTagSystem::handleChoice(int choice) {
     switch (choice) {
         case 1:
@@ -66,7 +64,7 @@ void FileTagSystem::handleChoice(int choice) {
     }
 }
 
-// 获取有效的用户输入
+// 获取有效用户输入的函数，带有提示信息
 std::string FileTagSystem::getValidInput(const std::string& prompt) const {
     std::string input;
     while (true) {
@@ -82,12 +80,12 @@ std::string FileTagSystem::getValidInput(const std::string& prompt) const {
     }
 }
 
-// 获取标签输入
+// 获取标签输入的函数
 std::string FileTagSystem::getTag() const {
     return getValidInput("请输入要添加的标签 (输入 'exit' 返回主界面): ");
 }
 
-// 获取有效的路径输入
+// 获取有效路径输入的函数
 std::string FileTagSystem::getValidPath() const {
     std::string path;
     while (true) {
@@ -104,7 +102,7 @@ std::string FileTagSystem::getValidPath() const {
     }
 }
 
-// 添加标签
+// 添加标签的函数
 void FileTagSystem::addTags() {
     std::string path = getValidPath();
     if (path.empty()) return;
@@ -121,7 +119,23 @@ void FileTagSystem::addTags() {
             }
             for (const auto& entry : std::filesystem::directory_iterator(path)) {
                 if (entry.is_regular_file()) {
-                    tagManager.addTag(entry.path().string(), tag);
+                    auto existingTags = tagManager.listTagsForFile(entry.path().string());
+                    if (!existingTags.empty()) {
+                        std::cout << "文件 " << entry.path().string() << " 已有标签: ";
+                        for (const auto& t : existingTags) {
+                            std::cout << t << " ";
+                        }
+                        std::cout << "\n请选择操作：1. 修改已有标签 2. 新增标签 3. 不做任何修改" << std::endl;
+                        int choice;
+                        std::cin >> choice;
+                        if (choice == 1) {
+                            tagManager.updateTag(entry.path().string(), existingTags[0], tag); // 简单起见，假设只修改第一个标签
+                        } else if (choice == 2) {
+                            tagManager.addTag(entry.path().string(), tag);
+                        }
+                    } else {
+                        tagManager.addTag(entry.path().string(), tag);
+                    }
                 }
             }
         } else if (tagChoice == 2) {
@@ -132,7 +146,23 @@ void FileTagSystem::addTags() {
                     if (tag.empty()) {
                         return;
                     }
-                    tagManager.addTag(entry.path().string(), tag);
+                    auto existingTags = tagManager.listTagsForFile(entry.path().string());
+                    if (!existingTags.empty()) {
+                        std::cout << "文件 " << entry.path().string() << " 已有标签: ";
+                        for (const auto& t : existingTags) {
+                            std::cout << t << " ";
+                        }
+                        std::cout << "\n请选择操作：1. 修改已有标签 2. 新增标签 3. 不做任何修改" << std::endl;
+                        int choice;
+                        std::cin >> choice;
+                        if (choice == 1) {
+                            tagManager.updateTag(entry.path().string(), existingTags[0], tag); // 简单起见，假设只修改第一个标签
+                        } else if (choice == 2) {
+                            tagManager.addTag(entry.path().string(), tag);
+                        }
+                    } else {
+                        tagManager.addTag(entry.path().string(), tag);
+                    }
                 }
             }
         } else {
@@ -144,11 +174,27 @@ void FileTagSystem::addTags() {
         if (tag.empty()) {
             return;
         }
-        tagManager.addTag(path, tag);
+        auto existingTags = tagManager.listTagsForFile(path);
+        if (!existingTags.empty()) {
+            std::cout << "文件 " << path << " 已有标签: ";
+            for (const auto& t : existingTags) {
+                std::cout << t << " ";
+            }
+            std::cout << "\n请选择操作：1. 修改已有标签 2. 新增标签 3. 不做任何修改" << std::endl;
+            int choice;
+            std::cin >> choice;
+            if (choice == 1) {
+                tagManager.updateTag(path, existingTags[0], tag); // 简单起见，假设只修改第一个标签
+            } else if (choice == 2) {
+                tagManager.addTag(path, tag);
+            }
+        } else {
+            tagManager.addTag(path, tag);
+        }
     }
 }
 
-// 根据标签搜索文件
+// 根据标签搜索文件的函数
 void FileTagSystem::searchFilesByTag() {
     std::string tag = getTag();
     if (tag.empty()) return;
@@ -164,7 +210,7 @@ void FileTagSystem::searchFilesByTag() {
     }
 }
 
-// 删除标签
+// 删除标签的函数
 void FileTagSystem::removeTag() {
     std::string path = getValidPath();
     if (path.empty()) return;
@@ -175,7 +221,7 @@ void FileTagSystem::removeTag() {
     tagManager.removeTag(path, tag);
 }
 
-// 更新标签
+// 更新标签的函数
 void FileTagSystem::updateTag() {
     std::string path = getValidPath();
     if (path.empty()) return;
@@ -189,7 +235,7 @@ void FileTagSystem::updateTag() {
     tagManager.updateTag(path, oldTag, newTag);
 }
 
-// 查看所有标签
+// 列出所有标签的函数
 void FileTagSystem::listAllTags() const {
     auto tags = tagManager.listAllTags();
     std::cout << "所有标签：" << std::endl;
@@ -198,7 +244,7 @@ void FileTagSystem::listAllTags() const {
     }
 }
 
-// 查看某个文件的标签
+// 列出某个文件的所有标签的函数
 void FileTagSystem::listTagsForFile() const {
     std::string path = getValidPath();
     if (path.empty()) return;
