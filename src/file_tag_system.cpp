@@ -1,5 +1,5 @@
 #include "file_tag_system.h"
-#include "user_manager.h" // 添加这行确保包含 user_manager 头文件
+#include "user_manager.h"
 #include <iostream>
 #include <filesystem>
 
@@ -11,8 +11,7 @@ FileTagSystem::FileTagSystem(const std::string& tagsFile, const std::string& use
     userManager.addUser("user", "user123", UserRole::USER);
 
     try {
-        // 尝试加载标签
-        tagManager.loadTags();
+        tagManager.loadTags(); // 尝试加载标签数据
         userManager.loadUsers(); // 添加这行确保加载用户数据
     } catch (const std::exception& e) {
         // 如果加载失败，输出错误信息并退出程序
@@ -25,8 +24,29 @@ FileTagSystem::FileTagSystem(const std::string& tagsFile, const std::string& use
 void FileTagSystem::run() {
     // 用户登录
     if (!login()) {
-        std::cerr << "登录失败，程序退出。" << std::endl;
-        return;
+        std::cerr << "登录失败," ;
+        std::cout << "是否注册新用户？(y/n): ";
+        char choice;
+        std::cin >> choice;
+        if (choice == 'y') {
+            std::string username, password;
+            int role;
+            std::cout << "请输入新用户名: ";
+            std::cin >> username;
+            std::cout << "请输入密码: ";
+            std::cin >> password;
+            std::cout << "请选择角色 (0 - 管理员, 1 - 普通用户): ";
+            std::cin >> role;
+            if (userManager.addUser(username, password, static_cast<UserRole>(role))) {
+                std::cout << "用户添加成功。" << std::endl;
+            } else {
+                std::cerr << "用户已存在。" << std::endl;
+            }
+        } else {
+            std::cerr << "退出程序。" << std::endl;
+            exit(1);
+        }
+        // return;
     }
 
     // 根据用户角色显示不同的菜单并处理选择

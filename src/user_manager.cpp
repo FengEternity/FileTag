@@ -3,6 +3,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <algorithm>
+#include <iostream>
 
 // 构造函数，接受文件名作为参数
 UserManager::UserManager(const std::string& filename) : filename(filename) {
@@ -89,4 +90,10 @@ void UserManager::saveUsers() const {
              << (pair.second.role == UserRole::ADMIN ? "ADMIN" : "USER") << '\n';
     }
     file.close();
+
+    if (!file) {
+        throw std::runtime_error("写入文件失败");
+    } else {
+        std::cout << "用户数据已保存" << std::endl;
+    }
 }
