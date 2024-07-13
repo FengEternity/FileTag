@@ -41,6 +41,7 @@ bool UserManager::addUser(const std::string& username, const std::string& passwo
         return false; // 用户已存在
     }
     users[username] = {hashPassword(password), role};
+    saveUsers();
     return true;
 }
 
