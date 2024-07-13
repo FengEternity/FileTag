@@ -135,6 +135,7 @@ void FileTagSystem::handleAdminChoice(int choice) {
     // 保存标签数据
     try {
         tagManager.saveTags();
+        userManager.saveUsers();
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
     }
@@ -176,6 +177,7 @@ void FileTagSystem::handleChoice(int choice) {
 
     // 保存标签数据
     try {
+        userManager.saveUsers();
         tagManager.saveTags();
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
