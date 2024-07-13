@@ -98,3 +98,19 @@ void UserManager::saveUsers() const {
         std::cout << "用户数据已保存" << std::endl;
     }
 }
+
+void UserManager::createUser() {
+    std::string username, password;
+    int role;
+    std::cout << "请输入新用户名: ";
+    std::cin >> username;
+    std::cout << "请输入密码: ";
+    std::cin >> password;
+    std::cout << "请选择角色 (0 - 管理员, 1 - 普通用户): ";
+    std::cin >> role;
+    if (addUser(username, password, static_cast<UserRole>(role))) {
+        std::cout << "用户添加成功。" << std::endl;
+    } else {
+        std::cerr << "用户已存在。" << std::endl;
+    }
+}

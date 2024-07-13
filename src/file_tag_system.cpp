@@ -29,19 +29,7 @@ void FileTagSystem::run() {
         char choice;
         std::cin >> choice;
         if (choice == 'y') {
-            std::string username, password;
-            int role;
-            std::cout << "请输入新用户名: ";
-            std::cin >> username;
-            std::cout << "请输入密码: ";
-            std::cin >> password;
-            std::cout << "请选择角色 (0 - 管理员, 1 - 普通用户): ";
-            std::cin >> role;
-            if (userManager.addUser(username, password, static_cast<UserRole>(role))) {
-                std::cout << "用户添加成功。" << std::endl;
-            } else {
-                std::cerr << "用户已存在。" << std::endl;
-            }
+            userManager.createUser();
         } else {
             std::cerr << "退出程序。" << std::endl;
             exit(1);
@@ -109,19 +97,7 @@ void FileTagSystem::handleAdminChoice(int choice) {
             listTagsForFile();
             break;
         case 7: {
-            std::string username, password;
-            int role;
-            std::cout << "请输入新用户名: ";
-            std::cin >> username;
-            std::cout << "请输入密码: ";
-            std::cin >> password;
-            std::cout << "请选择角色 (0 - 管理员, 1 - 普通用户): ";
-            std::cin >> role;
-            if (userManager.addUser(username, password, static_cast<UserRole>(role))) {
-                std::cout << "用户添加成功。" << std::endl;
-            } else {
-                std::cerr << "用户已存在。" << std::endl;
-            }
+            userManager.createUser();
             break;
         }
         case 8:

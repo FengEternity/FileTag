@@ -16,7 +16,7 @@ public:
 
     bool addUser(const std::string& username, const std::string& password, UserRole role);
     bool authenticate(const std::string& username, const std::string& password) const;
-    bool createUser(const std::string& username, const std::string& password, UserRole role);
+    void createUser();
     void loadUsers();  // 从文件加载用户数据
     void saveUsers() const;  // 保存用户数据到文件
     UserRole getUserRole(const std::string& username) const;
