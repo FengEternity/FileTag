@@ -6,7 +6,7 @@ int main() {
     std::cerr.rdbuf(std::cout.rdbuf());
 
     // 初始化 FileTagSystem，并运行程序
-    FileTagSystem system("tags.csv");
+    FileTagSystem system("tags.csv", "users.csv");
     system.run();
 
     return 0;

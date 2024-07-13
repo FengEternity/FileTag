@@ -2,13 +2,13 @@
 #define FILE_TAG_SYSTEM_H
 
 #include "tag_manager.h"
-#include "user_manager.h"  // 新增的用户管理头文件
+#include "user_manager.h"
 #include <string>
 
 class FileTagSystem {
 public:
     // 构造函数，接受标签文件路径作为参数
-    explicit FileTagSystem(const std::string& tagsFile);
+    explicit FileTagSystem(const std::string& tagsFile, const std::string& usersFile);
     // 主运行函数，控制程序的主循环
     void run();
 

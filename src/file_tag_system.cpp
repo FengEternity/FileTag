@@ -4,7 +4,8 @@
 #include <filesystem>
 
 // 构造函数，初始化 FileTagSystem 对象
-FileTagSystem::FileTagSystem(const std::string& tagsFile) : tagManager(tagsFile) {
+FileTagSystem::FileTagSystem(const std::string& tagsFile, const std::string& usersFile)
+    : tagManager(tagsFile), userManager(usersFile) {
     // 初始化用户管理器，添加一些默认用户
     userManager.addUser("admin", "admin123", UserRole::ADMIN);
     userManager.addUser("user", "user123", UserRole::USER);
@@ -12,6 +13,7 @@ FileTagSystem::FileTagSystem(const std::string& tagsFile) : tagManager(tagsFile)
     try {
         // 尝试加载标签
         tagManager.loadTags();
+        userManager.loadUsers(); // 添加这行确保加载用户数据
     } catch (const std::exception& e) {
         // 如果加载失败，输出错误信息并退出程序
         std::cerr << e.what() << std::endl;

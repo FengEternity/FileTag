@@ -11,21 +11,25 @@ enum class UserRole {
 
 class UserManager {
 public:
-    // 添加用户，返回是否成功
+    UserManager(const std::string& filename);  // 构造函数，接受文件名作为参数
+    ~UserManager();  // 析构函数，保存数据到文件
+
     bool addUser(const std::string& username, const std::string& password, UserRole role);
-    // 验证用户，返回是否成功
     bool authenticate(const std::string& username, const std::string& password) const;
-    // 获取用户角色
+    void loadUsers();  // 从文件加载用户数据
+    void saveUsers() const;  // 保存用户数据到文件
     UserRole getUserRole(const std::string& username) const;
 
 private:
-    // 用户信息结构体
     struct UserInfo {
         std::string password;
         UserRole role;
     };
-    // 用户信息存储
+
     std::unordered_map<std::string, UserInfo> users;
+    std::string filename;
+
+    std::string hashPassword(const std::string& password) const;  // 密码哈希函数
 };
 
 #endif // USER_MANAGER_H
