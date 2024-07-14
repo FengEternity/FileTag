@@ -334,6 +334,10 @@ void FileTagSystem::updateTag() {
 // 列出所有标签的函数
 void FileTagSystem::listAllTags() const {
     auto tags = tagManager.listAllTags();
+    if (tags.empty()){
+        std::cerr << "标签为空！" << std::endl;
+        return;
+    }
     std::cout << "所有标签：" << std::endl;
     for (const auto& tag : tags) {
         std::cout << tag << std::endl;

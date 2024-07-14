@@ -95,10 +95,11 @@ void UserManager::saveUsers() const {
     if (!file) {
         throw std::runtime_error("写入文件失败");
     } else {
-        std::cout << "用户数据已保存" << std::endl;
+        // std::cout << "用户数据已保存" << std::endl;
     }
 }
 
+// 创建用户
 void UserManager::createUser() {
     std::string username, password;
     int role;
