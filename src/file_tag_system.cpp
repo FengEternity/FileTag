@@ -236,12 +236,8 @@ void FileTagSystem::updateTag(const std::string& filepath, const std::string& ol
 }
 
 // 列出所有标签的函数
-void FileTagSystem::listAllTags() const {
-    auto tags = tagManager.listAllTags();
-    std::cout << "所有标签：" << std::endl;
-    for (const auto& tag : tags) {
-        std::cout << tag << std::endl;
-    }
+std::vector<std::string> FileTagSystem::listAllTags() const {
+    return tagManager.listAllTags();
 }
 
 // 列出某个文件的所有标签的函数

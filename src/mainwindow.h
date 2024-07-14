@@ -4,7 +4,11 @@
 #include <QMainWindow>
 #include <QPushButton>
 #include <QVBoxLayout>
+#include <QHBoxLayout>
 #include <QLabel>
+#include <QListWidget>
+#include <QTextEdit>
+#include <QToolBar>
 #include "file_tag_system.h"
 
 class MainWindow : public QMainWindow {
@@ -19,6 +23,7 @@ private slots:
     void onSearchTagClicked();
     void onRemoveTagClicked();
     void onUpdateTagClicked();
+    void onTagSelected(); // 当选择标签时调用的槽函数
 
 private:
     QPushButton *addTagButton;
@@ -28,9 +33,18 @@ private:
     QLabel *infoLabel;
 
     QWidget *centralWidget;
-    QVBoxLayout *layout;
+    QVBoxLayout *mainLayout;
+    QHBoxLayout *contentLayout;
+    QVBoxLayout *leftLayout;
+    QVBoxLayout *rightLayout;
+
+    QToolBar *toolBar;
+    QListWidget *tagListWidget;
+    QTextEdit *displayArea;
 
     FileTagSystem fileTagSystem;  // 添加 FileTagSystem 成员
+
+    void populateTags();  // 填充标签列表
 };
 
 #endif // MAINWINDOW_H

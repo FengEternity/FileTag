@@ -4,7 +4,7 @@
 #include "tag_manager.h"
 #include "user_manager.h"
 #include <string>
-#include <vector> // 添加这一行
+#include <vector>
 
 class FileTagSystem {
 public:
@@ -14,13 +14,15 @@ public:
     void run();
 
     // 添加标签的函数
-    void addTags(const std::string& filepath, const std::string& tag);  // 修改函数签名
+    void addTags(const std::string& filepath, const std::string& tag);
     // 根据标签搜索文件的函数
-    std::vector<std::string> searchFilesByTag(const std::string& tag) const;  // 修改函数签名和返回值
+    std::vector<std::string> searchFilesByTag(const std::string& tag) const;
     // 删除标签的函数
-    void removeTag(const std::string& filepath, const std::string& tag);  // 修改函数签名
+    void removeTag(const std::string& filepath, const std::string& tag);
     // 更新标签的函数
-    void updateTag(const std::string& filepath, const std::string& oldTag, const std::string& newTag);  // 修改函数签名
+    void updateTag(const std::string& filepath, const std::string& oldTag, const std::string& newTag);
+    // 列出所有标签的函数
+    std::vector<std::string> listAllTags() const;
 
 private:
     // 显示主菜单
@@ -28,8 +30,6 @@ private:
     // 处理用户的菜单选择
     void handleChoice(int choice);
 
-    // 显示所有标签的函数
-    void listAllTags() const;
     // 列出某个文件的所有标签的函数
     void listTagsForFile() const;
 
