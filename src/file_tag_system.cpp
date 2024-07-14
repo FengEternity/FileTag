@@ -1,11 +1,10 @@
 #include "file_tag_system.h"
-#include "user_manager.h"
 #include <iostream>
 #include <filesystem>
 
 // 构造函数，初始化 FileTagSystem 对象
 FileTagSystem::FileTagSystem(const std::string& tagsFile, const std::string& usersFile)
-    : tagManager(tagsFile), userManager(usersFile) {
+        : tagManager(tagsFile), userManager(usersFile) {
     // 初始化用户管理器，添加一些默认用户
     userManager.addUser("admin", "admin123", UserRole::ADMIN);
     userManager.addUser("user", "user123", UserRole::USER);
@@ -79,16 +78,21 @@ void FileTagSystem::displayAdminMenu() const {
 void FileTagSystem::handleAdminChoice(int choice) {
     switch (choice) {
         case 1:
-            addTags();
+            addTags(getValidPath(), getTag());
             break;
-        case 2:
-            searchFilesByTag();
+        case 2: {
+            std::string tag = getTag();
+            auto results = searchFilesByTag(tag);
+            for (const auto& file : results) {
+                std::cout << file << std::endl;
+            }
             break;
+        }
         case 3:
-            removeTag();
+            removeTag(getValidPath(), getTag());
             break;
         case 4:
-            updateTag();
+            updateTag(getValidPath(), getTag(), getTag());
             break;
         case 5:
             listAllTags();
@@ -126,16 +130,21 @@ void FileTagSystem::displayMenu() const {
 void FileTagSystem::handleChoice(int choice) {
     switch (choice) {
         case 1:
-            addTags();
+            addTags(getValidPath(), getTag());
             break;
-        case 2:
-            searchFilesByTag();
+        case 2: {
+            std::string tag = getTag();
+            auto results = searchFilesByTag(tag);
+            for (const auto& file : results) {
+                std::cout << file << std::endl;
+            }
             break;
+        }
         case 3:
-            removeTag();
+            removeTag(getValidPath(), getTag());
             break;
         case 4:
-            updateTag();
+            updateTag(getValidPath(), getTag(), getTag());
             break;
         case 5:
             listAllTags();
@@ -199,145 +208,36 @@ std::string FileTagSystem::getValidPath() const {
 }
 
 // 添加标签的函数
-void FileTagSystem::addTags() {
-    std::string path = getValidPath();
-    if (path.empty()) return;
-
-    if (std::filesystem::is_directory(path)) {
-        int tagChoice;
-        std::cout << "请选择操作：1. 给所有文件添加相同的标签 2. 每个文件单独添加标签" << std::endl;
-        std::cin >> tagChoice;
-
-        if (tagChoice == 1) {
-            std::string tag = getTag();
-            if (tag.empty()) {
-                return;
+void FileTagSystem::addTags(const std::string& filepath, const std::string& tag) {
+    if (std::filesystem::is_directory(filepath)) {
+        for (const auto& entry : std::filesystem::directory_iterator(filepath)) {
+            if (entry.is_regular_file()) {
+                tagManager.addTag(entry.path().string(), tag);
             }
-            for (const auto& entry : std::filesystem::directory_iterator(path)) {
-                if (entry.is_regular_file()) {
-                    auto existingTags = tagManager.listTagsForFile(entry.path().string());
-                    if (!existingTags.empty()) {
-                        std::cout << "文件 " << entry.path().string() << " 已有标签: ";
-                        for (const auto& t : existingTags) {
-                            std::cout << t << " ";
-                        }
-                        std::cout << "\n请选择操作：1. 修改已有标签 2. 新增标签 3. 不做任何修改" << std::endl;
-                        int choice;
-                        std::cin >> choice;
-                        if (choice == 1) {
-                            tagManager.updateTag(entry.path().string(), existingTags[0], tag); // 简单起见，假设只修改第一个标签
-                        } else if (choice == 2) {
-                            tagManager.addTag(entry.path().string(), tag);
-                        }
-                    } else {
-                        tagManager.addTag(entry.path().string(), tag);
-                    }
-                }
-            }
-        } else if (tagChoice == 2) {
-            for (const auto& entry : std::filesystem::directory_iterator(path)) {
-                if (entry.is_regular_file()) {
-                    std::cout << "文件: " << entry.path().string() << std::endl;
-                    std::string tag = getTag();
-                    if (tag.empty()) {
-                        return;
-                    }
-                    auto existingTags = tagManager.listTagsForFile(entry.path().string());
-                    if (!existingTags.empty()) {
-                        std::cout << "文件 " << entry.path().string() << " 已有标签: ";
-                        for (const auto& t : existingTags) {
-                            std::cout << t << " ";
-                        }
-                        std::cout << "\n请选择操作：1. 修改已有标签 2. 新增标签 3. 不做任何修改" << std::endl;
-                        int choice;
-                        std::cin >> choice;
-                        if (choice == 1) {
-                            tagManager.updateTag(entry.path().string(), existingTags[0], tag); // 简单起见，假设只修改第一个标签
-                        } else if (choice == 2) {
-                            tagManager.addTag(entry.path().string(), tag);
-                        }
-                    } else {
-                        tagManager.addTag(entry.path().string(), tag);
-                    }
-                }
-            }
-        } else {
-            std::cerr << "无效的选择。" << std::endl;
-            return;
         }
     } else {
-        std::string tag = getTag();
-        if (tag.empty()) {
-            return;
-        }
-        auto existingTags = tagManager.listTagsForFile(path);
-        if (!existingTags.empty()) {
-            std::cout << "文件 " << path << " 已有标签: ";
-            for (const auto& t : existingTags) {
-                std::cout << t << " ";
-            }
-            std::cout << "\n请选择操作：1. 修改已有标签 2. 新增标签 3. 不做任何修改" << std::endl;
-            int choice;
-            std::cin >> choice;
-            if (choice == 1) {
-                tagManager.updateTag(path, existingTags[0], tag); // 简单起见，假设只修改第一个标签
-            } else if (choice == 2) {
-                tagManager.addTag(path, tag);
-            }
-        } else {
-            tagManager.addTag(path, tag);
-        }
+        tagManager.addTag(filepath, tag);
     }
 }
 
 // 根据标签搜索文件的函数
-void FileTagSystem::searchFilesByTag() {
-    std::string tag = getTag();
-    if (tag.empty()) return;
-
-    std::vector<std::string> filepaths = tagManager.searchFilesByTag(tag);
-    if (filepaths.empty()) {
-        std::cout << "没有找到匹配的文件。" << std::endl;
-    } else {
-        std::cout << "匹配的文件路径：" << std::endl;
-        for (const auto& filepath : filepaths) {
-            std::cout << filepath << std::endl;
-        }
-    }
+std::vector<std::string> FileTagSystem::searchFilesByTag(const std::string& tag) const {
+    return tagManager.searchFilesByTag(tag);
 }
 
 // 删除标签的函数
-void FileTagSystem::removeTag() {
-    std::string path = getValidPath();
-    if (path.empty()) return;
-
-    std::string tag = getTag();
-    if (tag.empty()) return;
-
-    tagManager.removeTag(path, tag);
+void FileTagSystem::removeTag(const std::string& filepath, const std::string& tag) {
+    tagManager.removeTag(filepath, tag);
 }
 
 // 更新标签的函数
-void FileTagSystem::updateTag() {
-    std::string path = getValidPath();
-    if (path.empty()) return;
-
-    std::string oldTag = getTag();
-    if (oldTag.empty()) return;
-
-    std::string newTag = getValidInput("请输入新的标签 (输入 'exit' 返回主界面): ");
-    if (newTag.empty()) return;
-
-    tagManager.updateTag(path, oldTag, newTag);
+void FileTagSystem::updateTag(const std::string& filepath, const std::string& oldTag, const std::string& newTag) {
+    tagManager.updateTag(filepath, oldTag, newTag);
 }
 
 // 列出所有标签的函数
 void FileTagSystem::listAllTags() const {
     auto tags = tagManager.listAllTags();
-    if (tags.empty()){
-        std::cerr << "标签为空！" << std::endl;
-        return;
-    }
     std::cout << "所有标签：" << std::endl;
     for (const auto& tag : tags) {
         std::cout << tag << std::endl;
