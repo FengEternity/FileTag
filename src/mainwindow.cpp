@@ -1,13 +1,14 @@
 #include "mainwindow.h"
 #include <QInputDialog>
 #include <QMessageBox>
+#include <QSplitter>
 
 MainWindow::MainWindow(QWidget *parent)
         : QMainWindow(parent), addTagButton(new QPushButton("添加标签", this)),
           searchTagButton(new QPushButton("搜索标签", this)),
           removeTagButton(new QPushButton("删除标签", this)),
           updateTagButton(new QPushButton("更新标签", this)),
-          infoLabel(new QLabel("文件标签系统", this)),
+          // infoLabel(new QLabel("文件标签系统", this)),
           centralWidget(new QWidget(this)), mainLayout(new QVBoxLayout),
           contentLayout(new QHBoxLayout), leftLayout(new QVBoxLayout),
           rightLayout(new QVBoxLayout), toolBar(new QToolBar(this)),
@@ -24,20 +25,18 @@ MainWindow::MainWindow(QWidget *parent)
     toolBar->addAction("更新标签", this, &MainWindow::onUpdateTagClicked);
     addToolBar(toolBar);
 
-    // 左侧布局：标签列表
-    leftLayout->addWidget(tagListWidget);
+    // 使用 QSplitter 来分割左侧和右侧布局
+    QSplitter *splitter = new QSplitter(Qt::Horizontal);
+    splitter->addWidget(tagListWidget);
+    splitter->addWidget(displayArea);
 
-    // 中间布局：显示区域
-    displayArea->setReadOnly(true);
-    rightLayout->addWidget(displayArea);
-
-    // 内容布局
-    contentLayout->addLayout(leftLayout);
-    contentLayout->addLayout(rightLayout);
+    // 设置左侧标签列表占20%
+    splitter->setStretchFactor(0, 1);
+    splitter->setStretchFactor(1, 4);
 
     // 主布局
     mainLayout->addWidget(infoLabel);
-    mainLayout->addLayout(contentLayout);
+    mainLayout->addWidget(splitter);
 
     // 设定中央窗口
     centralWidget->setLayout(mainLayout);
