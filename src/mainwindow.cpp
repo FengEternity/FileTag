@@ -16,7 +16,7 @@ MainWindow::MainWindow(QWidget *parent)
           fileTagSystem("tags.csv", "users.csv") {  // 初始化 FileTagSystem 对象
 
     // 设置窗口标题
-    setWindowTitle("文件标签系统");
+    setWindowTitle("FileTag");
 
     // 初始化工具栏并添加按钮
     toolBar->addAction("添加标签", this, &MainWindow::onAddTagClicked);
@@ -35,7 +35,6 @@ MainWindow::MainWindow(QWidget *parent)
     splitter->setStretchFactor(1, 4);
 
     // 主布局
-    // mainLayout->addWidget(infoLabel);
     mainLayout->addWidget(splitter);
 
     // 设定中央窗口
@@ -107,7 +106,8 @@ void MainWindow::onTagSelected() {
     if (item) {
         std::string tag = item->text().toStdString();
         std::vector<std::string> files = fileTagSystem.searchFilesByTag(tag);
-        QString result = "标签: " + QString::fromStdString(tag) + "\n对应的文件:\n";
+        // QString result = "标签: " + QString::fromStdString(tag) + "\n对应的文件:\n";
+        QString result = QString::fromStdString(tag);
         for (const auto &file : files) {
             result += QString::fromStdString(file) + "\n";
         }

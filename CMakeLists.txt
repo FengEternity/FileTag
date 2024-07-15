@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 # 启用自动生成MOC文件
 set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
 
 # 查找Qt6包
 set(CMAKE_PREFIX_PATH "/opt/homebrew/Cellar/qt/6.7.0_1/lib/cmake")
@@ -25,6 +26,7 @@ add_executable(FileTag
         src/user_manager.h
         src/mainwindow.cpp
         src/mainwindow.h
+        resources/resources.qrc
 )
 
 # 链接Qt6库
