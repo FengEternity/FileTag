@@ -2,17 +2,17 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QPushButton>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QListWidget>
 #include <QTextEdit>
 #include <QToolBar>
+#include <QMenuBar>
 #include "file_tag_system.h"
 
 class MainWindow : public QMainWindow {
-Q_OBJECT  // 添加 Q_OBJECT 宏
+Q_OBJECT
 
 public:
     MainWindow(QWidget *parent = nullptr);
@@ -26,19 +26,17 @@ private slots:
     void onTagSelected(); // 当选择标签时调用的槽函数
 
 private:
-    QPushButton *addTagButton;
-    QPushButton *searchTagButton;
-    QPushButton *removeTagButton;
-    QPushButton *updateTagButton;
     QLabel *infoLabel;
 
     QWidget *centralWidget;
     QVBoxLayout *mainLayout;
-    QHBoxLayout *contentLayout;
-    QVBoxLayout *leftLayout;
-    QVBoxLayout *rightLayout;
 
     QToolBar *toolBar;
+
+    QMenuBar *menuBar;
+    QMenu *fileMenu;
+    QMenu *editMenu;
+
     QListWidget *tagListWidget;
     QTextEdit *displayArea;
 
