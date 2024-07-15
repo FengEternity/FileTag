@@ -10,6 +10,8 @@
 #include <QFileSystemModel>
 #include <QToolBar>
 #include <QMenuBar>
+#include <QFile>
+#include <QTextStream>
 #include "file_tag_system.h"
 
 class MainWindow : public QMainWindow {
@@ -24,13 +26,14 @@ private slots:
     void onSearchTagClicked();
     void onRemoveTagClicked();
     void onUpdateTagClicked();
-    void onTagSelected(); // 当选择标签时调用的槽函数
+    void onTagSelected();
+    void onFileClicked(const QModelIndex &index);  // 文件点击槽函数
 
 private:
     QLabel *infoLabel;
 
     QWidget *centralWidget;
-    QHBoxLayout *mainLayout; // 修改为QHBoxLayout
+    QHBoxLayout *mainLayout;
     QVBoxLayout *sideBarLayout;
     QVBoxLayout *contentLayout;
 
@@ -48,6 +51,7 @@ private:
 
     void populateTags();  // 填充标签列表
     void displayFiles(const QStringList& filepaths);  // 显示文件列表
+    void showFilePreview(const QString &filePath);  // 显示文件预览
 };
 
 #endif // MAINWINDOW_H

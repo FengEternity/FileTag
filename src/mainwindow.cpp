@@ -1,5 +1,4 @@
 #include "mainwindow.h"
-#include <QFileDialog>
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QSplitter>
@@ -14,7 +13,8 @@
 #include <QMenuBar>
 #include <QFile>
 #include <QTextStream>
-#include "file_tag_system.h"
+#include <QImageReader>
+#include <QTextEdit>
 
 MainWindow::MainWindow(QWidget *parent)
         : QMainWindow(parent),
@@ -63,7 +63,6 @@ MainWindow::MainWindow(QWidget *parent)
     centralWidget->setLayout(mainLayout);
     setCentralWidget(centralWidget);
 
-    // 设置 QSS
     QFile file(":/stylesheet.qss"); // 假设样式表文件名为 stylesheet.qss
     if (file.open(QFile::ReadOnly)) {
         QString styleSheet = QTextStream(&file).readAll();
@@ -71,7 +70,6 @@ MainWindow::MainWindow(QWidget *parent)
         file.close();
     }
 
-    // 初始化文件系统模型
     fileModel->setRootPath(QDir::currentPath());
     fileView->setModel(fileModel);
     fileView->setRootIndex(fileModel->index(QDir::currentPath()));
@@ -81,6 +79,8 @@ MainWindow::MainWindow(QWidget *parent)
     populateTags();
 
     connect(tagListWidget, &QListWidget::itemClicked, this, &MainWindow::onTagSelected);
+    connect(fileView, &QListView::clicked, this, &MainWindow::onFileClicked);  // 连接文件点击信号
+
     connect(addTagAction, &QAction::triggered, this, &MainWindow::onAddTagClicked);
     connect(searchTagAction, &QAction::triggered, this, &MainWindow::onSearchTagClicked);
     connect(removeTagAction, &QAction::triggered, this, &MainWindow::onRemoveTagClicked);
@@ -90,13 +90,10 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow() {}
 
 void MainWindow::onAddTagClicked() {
-    QString filePath = QFileDialog::getOpenFileName(this, "选择文件", "", "所有文件 (*)");
-    if (filePath.isEmpty()) {
-        return;
-    }
-
+    QString filePath = QInputDialog::getText(this, "添加标签", "请输入文件路径:");
     QString tag = QInputDialog::getText(this, "添加标签", "请输入标签:");
-    if (!tag.isEmpty()) {
+
+    if (!filePath.isEmpty() && !tag.isEmpty()) {
         fileTagSystem.addTags(filePath.toStdString(), tag.toStdString());
         QMessageBox::information(this, "标签已添加", "标签已添加到文件: " + filePath);
         populateTags();
@@ -117,12 +114,9 @@ void MainWindow::onSearchTagClicked() {
 }
 
 void MainWindow::onRemoveTagClicked() {
-    QString filePath = QFileDialog::getOpenFileName(this, "选择文件", "", "所有文件 (*)");
-    if (filePath.isEmpty()) {
-        return;
-    }
-
+    QString filePath = QInputDialog::getText(this, "删除标签", "请输入文件路径:");
     QString tag = QInputDialog::getText(this, "删除标签", "请输入标签:");
+
     if (!filePath.isEmpty() && !tag.isEmpty()) {
         fileTagSystem.removeTag(filePath.toStdString(), tag.toStdString());
         QMessageBox::information(this, "标签已删除", "标签已从文件删除: " + filePath);
@@ -131,11 +125,7 @@ void MainWindow::onRemoveTagClicked() {
 }
 
 void MainWindow::onUpdateTagClicked() {
-    QString filePath = QFileDialog::getOpenFileName(this, "选择文件", "", "所有文件 (*)");
-    if (filePath.isEmpty()) {
-        return;
-    }
-
+    QString filePath = QInputDialog::getText(this, "更新标签", "请输入文件路径:");
     QString oldTag = QInputDialog::getText(this, "更新标签", "请输入旧标签:");
     QString newTag = QInputDialog::getText(this, "更新标签", "请输入新标签:");
 
@@ -170,7 +160,6 @@ void MainWindow::populateTags() {
 void MainWindow::displayFiles(const QStringList& filepaths) {
     qDebug() << "displayFiles 调用参数：" << filepaths;
 
-    // 如果文件路径列表为空，则清除视图
     if (filepaths.isEmpty()) {
         fileView->setRootIndex(QModelIndex());
         fileModel->setNameFilters(QStringList());  // 清除过滤器
@@ -215,4 +204,48 @@ void MainWindow::displayFiles(const QStringList& filepaths) {
         }
     }
     fileView->update();  // 手动刷新视图
+}
+
+void MainWindow::onFileClicked(const QModelIndex &index) {
+    QString filePath = fileModel->filePath(index);
+    showFilePreview(filePath);  // 显示文件预览
+}
+
+void MainWindow::showFilePreview(const QString &filePath) {
+    QFileInfo fileInfo(filePath);
+    if (fileInfo.isFile()) {
+        if (fileInfo.suffix().toLower() == "txt" || fileInfo.suffix().toLower() == "md") {
+            // 显示文本文件内容
+            QFile file(filePath);
+            if (file.open(QFile::ReadOnly | QFile::Text)) {
+                QTextStream in(&file);
+                QString content = in.readAll();
+                file.close();
+
+                // 使用QTextEdit显示文件内容
+                QTextEdit *textEdit = new QTextEdit;
+                textEdit->setReadOnly(true);
+                textEdit->setPlainText(content);
+
+                QDialog *dialog = new QDialog(this);
+                dialog->setWindowTitle(fileInfo.fileName());
+                QVBoxLayout *layout = new QVBoxLayout;
+                layout->addWidget(textEdit);
+                dialog->setLayout(layout);
+                dialog->exec();
+            }
+        } else if (fileInfo.suffix().toLower() == "png" || fileInfo.suffix().toLower() == "jpg" || fileInfo.suffix().toLower() == "jpeg") {
+            // 显示图片文件缩略图
+            QLabel *imageLabel = new QLabel;
+            QPixmap pixmap(filePath);
+            imageLabel->setPixmap(pixmap.scaled(256, 256, Qt::KeepAspectRatio));
+
+            QDialog *dialog = new QDialog(this);
+            dialog->setWindowTitle(fileInfo.fileName());
+            QVBoxLayout *layout = new QVBoxLayout;
+            layout->addWidget(imageLabel);
+            dialog->setLayout(layout);
+            dialog->exec();
+        }
+    }
 }
