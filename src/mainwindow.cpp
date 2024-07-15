@@ -15,6 +15,7 @@
 #include <QTextStream>
 #include <QImageReader>
 #include <QTextEdit>
+#include <QFileDialog>
 
 MainWindow::MainWindow(QWidget *parent)
         : QMainWindow(parent),
@@ -90,7 +91,10 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow() {}
 
 void MainWindow::onAddTagClicked() {
-    QString filePath = QInputDialog::getText(this, "添加标签", "请输入文件路径:");
+    QString filePath = QFileDialog::getOpenFileName(this, "选择文件", "", "所有文件 (*)");
+    if (filePath.isEmpty()) {
+        return;
+    }
     QString tag = QInputDialog::getText(this, "添加标签", "请输入标签:");
 
     if (!filePath.isEmpty() && !tag.isEmpty()) {
