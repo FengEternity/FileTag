@@ -8,7 +8,7 @@ MainWindow::MainWindow(QWidget *parent)
           searchTagButton(new QPushButton("搜索标签", this)),
           removeTagButton(new QPushButton("删除标签", this)),
           updateTagButton(new QPushButton("更新标签", this)),
-          // infoLabel(new QLabel("文件标签系统", this)),
+          infoLabel(new QLabel("FileTag", this)),
           centralWidget(new QWidget(this)), mainLayout(new QVBoxLayout),
           contentLayout(new QHBoxLayout), leftLayout(new QVBoxLayout),
           rightLayout(new QVBoxLayout), toolBar(new QToolBar(this)),
@@ -35,7 +35,7 @@ MainWindow::MainWindow(QWidget *parent)
     splitter->setStretchFactor(1, 4);
 
     // 主布局
-    mainLayout->addWidget(infoLabel);
+    // mainLayout->addWidget(infoLabel);
     mainLayout->addWidget(splitter);
 
     // 设定中央窗口
