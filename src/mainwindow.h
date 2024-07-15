@@ -6,7 +6,8 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QListWidget>
-#include <QTextEdit>
+#include <QListView>
+#include <QFileSystemModel>
 #include <QToolBar>
 #include <QMenuBar>
 #include "file_tag_system.h"
@@ -40,11 +41,13 @@ private:
     QMenu *editMenu;
 
     QListWidget *tagListWidget;
-    QTextEdit *displayArea;
+    QListView *fileView;  // 使用 QListView
+    QFileSystemModel *fileModel;  // 使用 QFileSystemModel
 
     FileTagSystem fileTagSystem;  // 添加 FileTagSystem 成员
 
     void populateTags();  // 填充标签列表
+    void displayFiles(const QStringList& filepaths);  // 显示文件列表
 };
 
 #endif // MAINWINDOW_H
