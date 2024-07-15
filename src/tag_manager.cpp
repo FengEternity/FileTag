@@ -59,6 +59,7 @@ void TagManager::saveTags() const {
 void TagManager::addTag(const std::string& filepath, const std::string& tag) {
     if (std::find(tags[filepath].begin(), tags[filepath].end(), tag) == tags[filepath].end()) {
         tags[filepath].push_back(tag);
+        saveTags();
     }
 }
 
@@ -66,6 +67,7 @@ void TagManager::addTag(const std::string& filepath, const std::string& tag) {
 void TagManager::removeTag(const std::string& filepath, const std::string& tag) {
     auto& fileTags = tags[filepath];
     fileTags.erase(std::remove(fileTags.begin(), fileTags.end(), tag), fileTags.end());
+    saveTags();
 }
 
 // 更新标签
@@ -73,6 +75,7 @@ void TagManager::updateTag(const std::string& filepath, const std::string& oldTa
     auto it = std::find(tags[filepath].begin(), tags[filepath].end(), oldTag);
     if (it != tags[filepath].end()) {
         *it = newTag;
+        saveTags();
     }
 }
 

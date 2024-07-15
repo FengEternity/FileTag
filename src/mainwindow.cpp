@@ -1,15 +1,18 @@
 #include "mainwindow.h"
+#include <QFileDialog>
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QSplitter>
 
 MainWindow::MainWindow(QWidget *parent)
         : QMainWindow(parent),
-          infoLabel(new QLabel("文件标签系统")),
-          centralWidget(new QWidget(this)), mainLayout(new QVBoxLayout),
-          toolBar(new QToolBar(this)),
-          tagListWidget(new QListWidget(this)), displayArea(new QTextEdit(this)),
-          fileTagSystem("tags.csv", "users.csv") {  // 初始化 FileTagSystem 对象
+          centralWidget(new QWidget(this)),
+          mainLayout(new QHBoxLayout), // 修改为QHBoxLayout
+          sideBarLayout(new QVBoxLayout),
+          contentLayout(new QVBoxLayout),
+          tagListWidget(new QListWidget(this)),
+          displayArea(new QTextEdit(this)),
+          fileTagSystem("tags.csv", "users.csv") {
 
     // 设置窗口标题
     setWindowTitle("FileTag");
@@ -20,7 +23,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 创建文件菜单
     fileMenu = menuBar->addMenu(tr("文件"));
-
     // 创建编辑菜单并添加操作
     editMenu = menuBar->addMenu(tr("编辑"));
     editMenu->addAction(tr("添加标签"), this, &MainWindow::onAddTagClicked);
@@ -34,6 +36,7 @@ MainWindow::MainWindow(QWidget *parent)
     QAction *removeTagAction = new QAction("删除标签", this);
     QAction *updateTagAction = new QAction("更新标签", this);
 
+    toolBar = new QToolBar(this);
     toolBar->addAction(addTagAction);
     toolBar->addAction(searchTagAction);
     toolBar->addAction(removeTagAction);
@@ -50,7 +53,6 @@ MainWindow::MainWindow(QWidget *parent)
     splitter->setStretchFactor(1, 4);
 
     // 主布局
-    // mainLayout->addWidget(infoLabel);
     mainLayout->addWidget(splitter);
 
     // 设定中央窗口
@@ -73,10 +75,13 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow() {}
 
 void MainWindow::onAddTagClicked() {
-    QString filePath = QInputDialog::getText(this, "添加标签", "请输入文件路径:");
-    QString tag = QInputDialog::getText(this, "添加标签", "请输入标签:");
+    QString filePath = QFileDialog::getOpenFileName(this, "选择文件", "", "所有文件 (*)");
+    if (filePath.isEmpty()) {
+        return;
+    }
 
-    if (!filePath.isEmpty() && !tag.isEmpty()) {
+    QString tag = QInputDialog::getText(this, "添加标签", "请输入标签:");
+    if (!tag.isEmpty()) {
         fileTagSystem.addTags(filePath.toStdString(), tag.toStdString());
         QMessageBox::information(this, "标签已添加", "标签已添加到文件: " + filePath);
         populateTags();
@@ -97,9 +102,12 @@ void MainWindow::onSearchTagClicked() {
 }
 
 void MainWindow::onRemoveTagClicked() {
-    QString filePath = QInputDialog::getText(this, "删除标签", "请输入文件路径:");
-    QString tag = QInputDialog::getText(this, "删除标签", "请输入标签:");
+    QString filePath = QFileDialog::getOpenFileName(this, "选择文件", "", "所有文件 (*)");
+    if (filePath.isEmpty()) {
+        return;
+    }
 
+    QString tag = QInputDialog::getText(this, "删除标签", "请输入标签:");
     if (!filePath.isEmpty() && !tag.isEmpty()) {
         fileTagSystem.removeTag(filePath.toStdString(), tag.toStdString());
         QMessageBox::information(this, "标签已删除", "标签已从文件删除: " + filePath);
@@ -108,7 +116,11 @@ void MainWindow::onRemoveTagClicked() {
 }
 
 void MainWindow::onUpdateTagClicked() {
-    QString filePath = QInputDialog::getText(this, "更新标签", "请输入文件路径:");
+    QString filePath = QFileDialog::getOpenFileName(this, "选择文件", "", "所有文件 (*)");
+    if (filePath.isEmpty()) {
+        return;
+    }
+
     QString oldTag = QInputDialog::getText(this, "更新标签", "请输入旧标签:");
     QString newTag = QInputDialog::getText(this, "更新标签", "请输入新标签:");
 

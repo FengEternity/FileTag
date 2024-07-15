@@ -29,7 +29,9 @@ private:
     QLabel *infoLabel;
 
     QWidget *centralWidget;
-    QVBoxLayout *mainLayout;
+    QHBoxLayout *mainLayout; // 修改为QHBoxLayout
+    QVBoxLayout *sideBarLayout;
+    QVBoxLayout *contentLayout;
 
     QToolBar *toolBar;
 

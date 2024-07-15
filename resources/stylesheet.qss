@@ -1,27 +1,27 @@
 QMainWindow {
-    background-color: #f5f5f5; /* 窗口背景颜色 */
+    background-color: #f5f5f5;
     border: none;
 }
 
 QToolBar {
-    background-color: #eeeeee; /* 工具栏背景颜色 */
+    background-color: #eeeeee;
     border: none;
 }
 
 QPushButton {
-    background-color: #e0e0e0; /* 按钮背景颜色 */
-    color: #000000; /* 按钮文本颜色 */
-    border: 1px solid #d0d0d0; /* 按钮边框颜色 */
-    border-radius: 4px; /* 按钮圆角 */
-    padding: 5px 15px; /* 按钮内边距 */
+    background-color: #e0e0e0;
+    color: #000000;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    padding: 5px 15px;
 }
 
 QPushButton:hover {
-    background-color: #d0d0d0; /* 按钮悬停背景颜色 */
+    background-color: #d0d0d0;
 }
 
 QPushButton:pressed {
-    background-color: #c0c0c0; /* 按钮按下背景颜色 */
+    background-color: #c0c0c0;
 }
 
 QLabel {
@@ -34,12 +34,8 @@ QListWidget {
     background-color: #ffffff;
     border: 1px solid #dddddd;
     padding: 5px;
-    font-size: 14px; /* 字体大小 */
+    font-size: 14px;
 }
 
 QTextEdit {
-    background-color: #ffffff;
-    border: 1px solid #dddddd;
-    padding: 5px;
-    font-size: 14px; /* 字体大小 */
-}
+    background-color: #ffffff

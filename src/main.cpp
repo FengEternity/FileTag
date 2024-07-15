@@ -5,7 +5,7 @@
 
 void applyStyleSheet(QApplication &app) {
     QFile file(":/stylesheet.qss");
-    if(!file.exists()) {
+    if (!file.exists()) {
         qWarning("未找到样式表");
         return;
     }
@@ -21,7 +21,6 @@ void applyStyleSheet(QApplication &app) {
 
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
-
     applyStyleSheet(app);
 
     MainWindow w;
