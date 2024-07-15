@@ -37,5 +37,9 @@ QListWidget {
     font-size: 14px;
 }
 
+QListWidget::item {
+    padding: 3px; /* 设置间距为10像素 */
+}
+
 QTextEdit {
     background-color: #ffffff
