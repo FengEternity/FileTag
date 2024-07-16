@@ -1,14 +1,21 @@
 #include "Logger.h"
 #include <QDateTime>
+#include <QDir>
 
 Logger& Logger::instance() {
     static Logger instance;
     return instance;
 }
 
-Logger::Logger() : logFile("application.log"), logStream(&logFile) {
+Logger::Logger() : logFile("logs/application.log"), logStream(&logFile) {
+    QDir logDir("logs");
+    if (!logDir.exists()) {
+        logDir.mkpath(".");
+    }
+
     if (!logFile.open(QIODevice::Append | QIODevice::Text)) {
-        // 如果无法打开日志文件，可以抛出异常或采取其他处理措施
+        // 如果无法打开日志文件，可以输出到标准错误流
+        QTextStream(stderr) << "无法打开日志文件: " << logFile.fileName() << "\n";
     }
 }
 
