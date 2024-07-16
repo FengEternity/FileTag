@@ -99,6 +99,8 @@ MainWindow::MainWindow(QWidget *parent)
     fileView->setViewMode(QListView::IconMode);  // 设置为图标模式
     fileView->setIconSize(QSize(64, 64));  // 设置图标大小
 
+    initializeView();  // 初始化为空视图
+
     populateTags();
 
     connect(tagListWidget, &QListWidget::itemClicked, this, &MainWindow::onTagSelected);
@@ -113,6 +115,11 @@ MainWindow::MainWindow(QWidget *parent)
 }
 
 MainWindow::~MainWindow() {}
+
+void MainWindow::initializeView() {
+    QStringListModel *emptyModel = new QStringListModel(this);
+    fileView->setModel(emptyModel);
+}
 
 void MainWindow::onAddTagClicked() {
     QString filePath = QFileDialog::getOpenFileName(this, "选择文件", "", "所有文件 (*)");
@@ -143,7 +150,6 @@ void MainWindow::onSearchTagClicked() {
     }
 }
 
-#include "MultiSelectDialog.h"
 
 void MainWindow::onRemoveTagClicked() {
     QString tag = QInputDialog::getText(this, "删除标签", "请输入标签:");
@@ -219,30 +225,26 @@ void MainWindow::populateTags() {
     }
 }
 
-void MainWindow::displayFiles(const QStringList& filepaths) {
-    // qDebug() << "displayFiles 调用参数：" << filepaths;
+void MainWindow::displayFiles(const QStringList &filepaths) {
     Logger::instance().log("displayFiles 调用参数：" + filepaths.join(", "));
 
     if (filepaths.isEmpty()) {
+        // 设置一个空的 QStringListModel 以隐藏所有文件和文件夹
+        QStringListModel *emptyModel = new QStringListModel(this);
+        fileView->setModel(emptyModel);
         fileView->setRootIndex(QModelIndex());
-        fileModel->setNameFilters(QStringList());  // 清除过滤器
-        fileView->update();  // 手动刷新视图
-        // qDebug() << "视图已清除";
         Logger::instance().log("视图已清除");
         return;
     }
 
-    // 清除视图缓存
-    fileModel->setNameFilters(QStringList());  // 清除任何现有的文件名过滤器
-    fileModel->setRootPath("");  // 重置根路径
-    fileView->setRootIndex(QModelIndex());  // 清除视图的根目录
-
     // 获取第一个文件的目录并设置为根目录
     QFileInfo firstFile(filepaths.first());
     QString directory = firstFile.absolutePath();
+
+    // 设置 QFileSystemModel
+    fileView->setModel(fileModel);
+    fileModel->setRootPath(directory);
     fileView->setRootIndex(fileModel->index(directory));
-    fileView->update();  // 手动刷新视图
-    // qDebug() << "设置根目录为：" << directory;
     Logger::instance().log("设置根目录为：" + directory);
 
     // 过滤文件
@@ -250,14 +252,11 @@ void MainWindow::displayFiles(const QStringList& filepaths) {
     for (const QString &filePath : filepaths) {
         QFileInfo fileInfo(filePath);
         nameFilters << fileInfo.fileName();
-        // qDebug() << "添加过滤文件：" << fileInfo.fileName();
         Logger::instance().log("添加过滤文件：" + fileInfo.fileName());
     }
     fileModel->setNameFilters(nameFilters);
     fileModel->setNameFilterDisables(false);
-    fileModel->setRootPath(directory);  // 设置根路径
-    fileView->update();  // 手动刷新视图
-    // qDebug() << "设置文件名过滤器";
+    fileView->setRootIndex(fileModel->index(directory));  // 设置视图的根目录
 
     // 设置文件名长度限制
     for (int i = 0; i < fileModel->rowCount(fileView->rootIndex()); ++i) {
@@ -266,7 +265,6 @@ void MainWindow::displayFiles(const QStringList& filepaths) {
         if (fileName.length() > 20) {  // 限制文件名长度
             QString shortName = fileName.left(17) + "...";
             fileModel->setData(index, shortName, Qt::DisplayRole);
-            // qDebug() << "截断文件名：" << fileName << "为：" << shortName;
             Logger::instance().log("截断文件名：" + fileName + "为：" + shortName);
         }
     }

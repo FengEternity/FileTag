@@ -31,6 +31,7 @@ private slots:
     void onFileClicked(const QModelIndex &index);  // 文件点击槽函数
     void showAboutDialog();
     void showDocumentation();
+    void initializeView();  // 初始化视图
 
 private:
     QLabel *infoLabel;
