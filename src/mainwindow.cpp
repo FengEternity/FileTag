@@ -16,6 +16,9 @@
 #include <QImageReader>
 #include <QTextEdit>
 #include <QFileDialog>
+#include <QToolButton>
+#include <QMenu>
+
 
 MainWindow::MainWindow(QWidget *parent)
         : QMainWindow(parent),
@@ -29,16 +32,19 @@ MainWindow::MainWindow(QWidget *parent)
           fileTagSystem("tags.csv", "users.csv") {
 
     setWindowTitle("FileTag");
+    resize(600,400);
 
     menuBar = new QMenuBar(this);
     setMenuBar(menuBar);
 
     fileMenu = menuBar->addMenu(tr("文件"));
-    editMenu = menuBar->addMenu(tr("编辑"));
-    editMenu->addAction(tr("添加标签"), this, &MainWindow::onAddTagClicked);
-    editMenu->addAction(tr("搜索标签"), this, &MainWindow::onSearchTagClicked);
-    editMenu->addAction(tr("删除标签"), this, &MainWindow::onRemoveTagClicked);
-    editMenu->addAction(tr("更新标签"), this, &MainWindow::onUpdateTagClicked);
+    tagMenu = menuBar->addMenu(tr("标签"));
+    helpMenu = menuBar->addMenu(tr("帮助"));
+
+    tagMenu->addAction(tr("添加标签"), this, &MainWindow::onAddTagClicked);
+    tagMenu->addAction(tr("搜索标签"), this, &MainWindow::onSearchTagClicked);
+    tagMenu->addAction(tr("删除标签"), this, &MainWindow::onRemoveTagClicked);
+    tagMenu->addAction(tr("更新标签"), this, &MainWindow::onUpdateTagClicked);
 
     QAction *addTagAction = new QAction("添加标签", this);
     QAction *searchTagAction = new QAction("搜索标签", this);
@@ -46,10 +52,20 @@ MainWindow::MainWindow(QWidget *parent)
     QAction *updateTagAction = new QAction("更新标签", this);
 
     toolBar = new QToolBar(this);
-    toolBar->addAction(addTagAction);
-    toolBar->addAction(searchTagAction);
-    toolBar->addAction(removeTagAction);
-    toolBar->addAction(updateTagAction);
+    QToolButton *toolButton = new QToolButton(this);
+    toolButton->setText("标签");
+    toolButton->setPopupMode(QToolButton::InstantPopup);
+
+    QMenu *tagMenu = new QMenu(toolButton);
+    tagMenu->addAction(addTagAction);
+    tagMenu->addAction(searchTagAction);
+    tagMenu->addAction(removeTagAction);
+    tagMenu->addAction(updateTagAction);
+    toolButton->setMenu(tagMenu);
+
+
+
+    toolBar->addWidget(toolButton);
     addToolBar(Qt::TopToolBarArea, toolBar);
 
     QSplitter *splitter = new QSplitter(Qt::Horizontal);

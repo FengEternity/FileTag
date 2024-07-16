@@ -42,6 +42,8 @@ private:
     QMenuBar *menuBar;
     QMenu *fileMenu;
     QMenu *editMenu;
+    QMenu *tagMenu;
+    QMenu *helpMenu;
 
     QListWidget *tagListWidget;
     QListView *fileView;  // 使用 QListView
