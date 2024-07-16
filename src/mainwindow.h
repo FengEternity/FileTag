@@ -33,6 +33,8 @@ private slots:
     void showAboutDialog();
     void showDocumentation();
     void initializeView();  // 初始化视图
+    void onFileSearchClicked();
+    void onFileTransferClicked();
 
 private:
     QLabel *infoLabel;
@@ -56,10 +58,12 @@ private:
 
     FileTagSystem fileTagSystem;  // 添加 FileTagSystem 成员
 
+    QAction *fileSearchAction;
+    QAction *fileTransferAction;
+
     void populateTags();  // 填充标签列表
     void displayFiles(const QStringList& filepaths);  // 显示文件列表
     void showFilePreview(const QString &filePath);  // 显示文件预览
-
 };
 
 #endif // MAINWINDOW_H

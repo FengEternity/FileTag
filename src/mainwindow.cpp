@@ -41,6 +41,16 @@ MainWindow::MainWindow(QWidget *parent)
     // 创建文件菜单
     fileMenu = menuBar->addMenu(tr("文件"));
 
+    // 在文件菜单下创建文件搜索和文件传输的二级菜单
+    fileSearchAction = new QAction(tr("文件搜索"), this);
+    fileTransferAction = new QAction(tr("文件传输"), this);
+    fileMenu->addAction(fileSearchAction);
+    fileMenu->addAction(fileTransferAction);
+
+    // 连接文件搜索和文件传输动作的信号和槽
+    connect(fileSearchAction, &QAction::triggered, this, &MainWindow::onFileSearchClicked);
+    connect(fileTransferAction, &QAction::triggered, this, &MainWindow::onFileTransferClicked);
+
     // 创建标签菜单并添加相关动作
     tagMenu = menuBar->addMenu(tr("标签"));
     tagMenu->addAction(tr("添加标签"), this, &MainWindow::onAddTagClicked);
@@ -53,7 +63,22 @@ MainWindow::MainWindow(QWidget *parent)
     QAction *removeTagAction = new QAction("删除标签", this);
     QAction *updateTagAction = new QAction("更新标签", this);
 
+    // 创建工具栏
     toolBar = new QToolBar(this);
+
+    // 创建文件菜单按钮
+    QToolButton *fileToolButton = new QToolButton(this);
+    fileToolButton->setText("文件");
+    fileToolButton->setPopupMode(QToolButton::InstantPopup);
+
+    // 创建文件二级菜单
+    QMenu *fileToolMenu = new QMenu(fileToolButton);
+    fileToolMenu->addAction(fileSearchAction);
+    fileToolMenu->addAction(fileTransferAction);
+    fileToolButton->setMenu(fileToolMenu);
+
+    // 将文件按钮添加到工具栏
+    toolBar->addWidget(fileToolButton);
 
     // 创建工具按钮
     QToolButton *toolButton = new QToolButton(this);
@@ -70,10 +95,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 将工具按钮添加到工具栏
     toolBar->addWidget(toolButton);
-
-    // 添加新的文件动作
-    QAction *fileAction = new QAction("文件", this);
-    toolBar->addAction(fileAction);
 
     // 将工具栏添加到窗口的顶部工具栏区域
     addToolBar(Qt::TopToolBarArea, toolBar);
@@ -133,21 +154,25 @@ MainWindow::MainWindow(QWidget *parent)
     // 连接帮助相关动作的信号和槽
     connect(aboutAction, &QAction::triggered, this, &MainWindow::showAboutDialog);
     connect(documentationAction, &QAction::triggered, this, &MainWindow::showDocumentation);
-
-    // 连接文件动作的信号和槽
-    connect(fileAction, &QAction::triggered, this, &MainWindow::onFileActionClicked);
 }
 
 // 文件动作的槽函数实现
 void MainWindow::onFileActionClicked() {
-//    // 实现文件动作的处理逻辑，例如打开文件对话框
-//    QString filePath = QFileDialog::getOpenFileName(this, "选择文件", "", "所有文件 (*)");
-//    if (!filePath.isEmpty()) {
-//        // 处理选定的文件路径
-//        QMessageBox::information(this, "文件已选择", "您选择的文件是: " + filePath);
-//    }
+    // 实现文件动作的处理逻辑，例如打开文件对话框
+    QString filePath = QFileDialog::getOpenFileName(this, "选择文件", "", "所有文件 (*)");
+    if (!filePath.isEmpty()) {
+        // 处理选定的文件路径
+        QMessageBox::information(this, "文件已选择", "您选择的文件是: " + filePath);
+    }
 }
 
+void MainWindow::onFileSearchClicked() {
+    // 文件搜索功能的空实现
+}
+
+void MainWindow::onFileTransferClicked() {
+    // 文件传输功能的空实现
+}
 
 MainWindow::~MainWindow() {}
 
@@ -352,11 +377,11 @@ void MainWindow::showFilePreview(const QString &filePath) {
 
 void MainWindow::showAboutDialog() {
     QMessageBox::about(this, "关于", "FileTag 是一个简单的文件标签工具。\n"
-                                    "版本：1.0\n"
-                                    "作者：Montee");
+                                     "版本：1.0\n"
+                                     "作者：Montee");
 }
 
 void MainWindow::showDocumentation() {
     QMessageBox::information(this, "帮助文档", "使用过程中如遇到问题欢迎联系我。\n"
-                                           "邮件：2605958732@qq.com");
+                                               "邮件：2605958732@qq.com");
 }
