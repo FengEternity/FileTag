@@ -14,7 +14,6 @@
 #include <QTextStream>
 #include "file_tag_system.h"
 #include "Logger.h"
-#include "TagController.h"
 
 class MainWindow : public QMainWindow {
 Q_OBJECT
@@ -32,8 +31,6 @@ private slots:
     void onFileClicked(const QModelIndex &index);  // 文件点击槽函数
     void showAboutDialog();
     void showDocumentation();
-    void updateTags();
-    void displayFiles(const QStringList& filepaths);
 
 private:
     QLabel *infoLabel;
@@ -56,10 +53,11 @@ private:
     QFileSystemModel *fileModel;  // 使用 QFileSystemModel
 
     FileTagSystem fileTagSystem;  // 添加 FileTagSystem 成员
-    TagController *tagController; // 添加 TagController 成员
 
     void populateTags();  // 填充标签列表
+    void displayFiles(const QStringList& filepaths);  // 显示文件列表
     void showFilePreview(const QString &filePath);  // 显示文件预览
+
 };
 
 #endif // MAINWINDOW_H
