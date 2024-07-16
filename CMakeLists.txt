@@ -10,10 +10,10 @@ set(CMAKE_AUTORCC ON)
 # 查找Qt6包
 set(CMAKE_PREFIX_PATH "/opt/homebrew/Cellar/qt/6.7.0_1/lib/cmake")
 
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Network)
 
 # 添加Qt6模块
-set(QT_LIBRARIES Qt6::Core Qt6::Gui Qt6::Widgets)
+set(QT_LIBRARIES Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Network)
 
 # 将 main.cpp、file_tag_system.cpp 和 tag_manager.cpp 编译为可执行文件 FileTag
 add_executable(FileTag
@@ -31,6 +31,8 @@ add_executable(FileTag
         src/MultiSelectDialog.h
         src/Logger.cpp
         src/Logger.h
+        src/FileProcessor.cpp
+        src/FileProcessor.h
 )
 
 # 链接Qt6库
