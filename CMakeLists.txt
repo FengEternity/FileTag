@@ -27,6 +27,8 @@ add_executable(FileTag
         src/mainwindow.cpp
         src/mainwindow.h
         resources/resources.qrc
+        src/MultiSelectDialog.cpp
+        src/MultiSelectDialog.h
 )
 
 # 链接Qt6库

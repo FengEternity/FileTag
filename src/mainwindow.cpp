@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "MultiSelectDialog.h"
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QSplitter>
@@ -140,16 +141,44 @@ void MainWindow::onSearchTagClicked() {
     }
 }
 
+#include "MultiSelectDialog.h"
+
 void MainWindow::onRemoveTagClicked() {
-    QString filePath = QInputDialog::getText(this, "删除标签", "请输入文件路径:");
     QString tag = QInputDialog::getText(this, "删除标签", "请输入标签:");
 
-    if (!filePath.isEmpty() && !tag.isEmpty()) {
-        fileTagSystem.removeTag(filePath.toStdString(), tag.toStdString());
-        QMessageBox::information(this, "标签已删除", "标签已从文件删除: " + filePath);
-        populateTags();
+    if (!tag.isEmpty()) {
+        std::vector<std::string> files = fileTagSystem.searchFilesByTag(tag.toStdString());
+        if (files.empty()) {
+            QMessageBox::information(this, "无文件", "没有文件包含此标签。");
+            return;
+        }
+
+        QStringList fileList;
+        for (const auto &file : files) {
+            fileList.append(QString::fromStdString(file));
+        }
+
+        // fileList.append("删除所有文件");  // 添加 "删除所有文件" 选项
+
+        MultiSelectDialog dialog(fileList, this);
+        if (dialog.exec() == QDialog::Accepted) {
+            QStringList selectedFiles = dialog.selectedItems();
+            if (selectedFiles.contains("删除所有文件")) {
+                for (const auto &file : files) {
+                    fileTagSystem.removeTag(file, tag.toStdString());
+                }
+                QMessageBox::information(this, "标签已删除", "标签已从所有文件删除。");
+            } else {
+                for (const auto &selectedFile : selectedFiles) {
+                    fileTagSystem.removeTag(selectedFile.toStdString(), tag.toStdString());
+                }
+                QMessageBox::information(this, "标签已删除", "标签已从选中的文件中删除。");
+            }
+            populateTags();
+        }
     }
 }
+
 
 void MainWindow::onUpdateTagClicked() {
     QString filePath = QInputDialog::getText(this, "更新标签", "请输入文件路径:");
