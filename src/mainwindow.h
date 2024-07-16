@@ -28,6 +28,8 @@ private slots:
     void onUpdateTagClicked();
     void onTagSelected();
     void onFileClicked(const QModelIndex &index);  // 文件点击槽函数
+    void showAboutDialog();
+    void showDocumentation();
 
 private:
     QLabel *infoLabel;
@@ -54,6 +56,7 @@ private:
     void populateTags();  // 填充标签列表
     void displayFiles(const QStringList& filepaths);  // 显示文件列表
     void showFilePreview(const QString &filePath);  // 显示文件预览
+
 };
 
 #endif // MAINWINDOW_H

@@ -38,9 +38,8 @@ MainWindow::MainWindow(QWidget *parent)
     setMenuBar(menuBar);
 
     fileMenu = menuBar->addMenu(tr("文件"));
-    tagMenu = menuBar->addMenu(tr("标签"));
-    helpMenu = menuBar->addMenu(tr("帮助"));
 
+    tagMenu = menuBar->addMenu(tr("标签"));
     tagMenu->addAction(tr("添加标签"), this, &MainWindow::onAddTagClicked);
     tagMenu->addAction(tr("搜索标签"), this, &MainWindow::onSearchTagClicked);
     tagMenu->addAction(tr("删除标签"), this, &MainWindow::onRemoveTagClicked);
@@ -63,10 +62,16 @@ MainWindow::MainWindow(QWidget *parent)
     tagMenu->addAction(updateTagAction);
     toolButton->setMenu(tagMenu);
 
-
-
     toolBar->addWidget(toolButton);
     addToolBar(Qt::TopToolBarArea, toolBar);
+
+
+    helpMenu = menuBar->addMenu(tr("帮助"));
+    QAction *aboutAction = new QAction(tr("关于"),this);
+    QAction *documentationAction = new QAction(tr("文档"),this);
+    helpMenu->addAction(aboutAction);
+    helpMenu->addAction(documentationAction);
+
 
     QSplitter *splitter = new QSplitter(Qt::Horizontal);
     splitter->addWidget(tagListWidget);
@@ -102,6 +107,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(searchTagAction, &QAction::triggered, this, &MainWindow::onSearchTagClicked);
     connect(removeTagAction, &QAction::triggered, this, &MainWindow::onRemoveTagClicked);
     connect(updateTagAction, &QAction::triggered, this, &MainWindow::onUpdateTagClicked);
+    connect(aboutAction, &QAction::triggered, this, &MainWindow::showAboutDialog);
+    connect(documentationAction, &QAction::triggered, this, &MainWindow::showDocumentation);
 }
 
 MainWindow::~MainWindow() {}
@@ -268,4 +275,15 @@ void MainWindow::showFilePreview(const QString &filePath) {
             dialog->exec();
         }
     }
+}
+
+void MainWindow::showAboutDialog() {
+    QMessageBox::about(this, "关于", "FileTag 是一个简单的文件标签工具。\n"
+                                    "版本：1.0\n"
+                                    "作者：Montee");
+}
+
+void MainWindow::showDocumentation() {
+    QMessageBox::information(this, "帮助文档", "使用过程中如遇到问题欢迎联系我。\n"
+                                           "邮件：2605958732@qq.com");
 }
