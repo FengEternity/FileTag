@@ -31,6 +31,8 @@ add_executable(FileTag
         src/MultiSelectDialog.h
         src/Logger.cpp
         src/Logger.h
+        src/TagController.cpp
+        src/TagController.h
 )
 
 # 链接Qt6库

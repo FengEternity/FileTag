@@ -11,15 +11,14 @@
 #include <QFileSystemModel>
 #include <QStringListModel>
 #include <QToolBar>
+#include <QToolButton>
 #include <QMenuBar>
 #include <QFile>
 #include <QTextStream>
 #include <QImageReader>
 #include <QTextEdit>
 #include <QFileDialog>
-#include <QToolButton>
 #include <QMenu>
-
 
 MainWindow::MainWindow(QWidget *parent)
         : QMainWindow(parent),
@@ -30,10 +29,11 @@ MainWindow::MainWindow(QWidget *parent)
           tagListWidget(new QListWidget(this)),
           fileView(new QListView(this)),  // 初始化 fileView
           fileModel(new QFileSystemModel(this)),  // 初始化 fileModel
-          fileTagSystem("tags.csv", "users.csv") {
+          fileTagSystem("tags.csv", "users.csv"),
+          tagController(new TagController("tags.csv", fileTagSystem, this)) {
 
     setWindowTitle("FileTag");
-    resize(600,400);
+    resize(600, 400);
 
     menuBar = new QMenuBar(this);
     setMenuBar(menuBar);
@@ -66,13 +66,11 @@ MainWindow::MainWindow(QWidget *parent)
     toolBar->addWidget(toolButton);
     addToolBar(Qt::TopToolBarArea, toolBar);
 
-
     helpMenu = menuBar->addMenu(tr("帮助"));
-    QAction *aboutAction = new QAction(tr("关于"),this);
-    QAction *documentationAction = new QAction(tr("文档"),this);
+    QAction *aboutAction = new QAction(tr("关于"), this);
+    QAction *documentationAction = new QAction(tr("文档"), this);
     helpMenu->addAction(aboutAction);
     helpMenu->addAction(documentationAction);
-
 
     QSplitter *splitter = new QSplitter(Qt::Horizontal);
     splitter->addWidget(tagListWidget);
@@ -110,105 +108,39 @@ MainWindow::MainWindow(QWidget *parent)
     connect(updateTagAction, &QAction::triggered, this, &MainWindow::onUpdateTagClicked);
     connect(aboutAction, &QAction::triggered, this, &MainWindow::showAboutDialog);
     connect(documentationAction, &QAction::triggered, this, &MainWindow::showDocumentation);
+
+    connect(tagController, &TagController::tagsUpdated, this, &MainWindow::updateTags);
+    connect(tagController, &TagController::displayFiles, this, &MainWindow::displayFiles);
 }
 
 MainWindow::~MainWindow() {}
 
 void MainWindow::onAddTagClicked() {
-    QString filePath = QFileDialog::getOpenFileName(this, "选择文件", "", "所有文件 (*)");
-    if (filePath.isEmpty()) {
-        return;
-    }
-    QString tag = QInputDialog::getText(this, "添加标签", "请输入标签:");
-
-    if (!filePath.isEmpty() && !tag.isEmpty()) {
-        fileTagSystem.addTags(filePath.toStdString(), tag.toStdString());
-        QMessageBox::information(this, "标签已添加", "标签已添加到文件: " + filePath);
-        Logger::instance().log("标签已添加到文件: " + filePath);
-        populateTags();
-    }
+    tagController->addTag(this);
 }
-
 
 void MainWindow::onSearchTagClicked() {
-    QString tag = QInputDialog::getText(this, "搜索标签", "请输入标签:");
-
-    if (!tag.isEmpty()) {
-        std::vector<std::string> files = fileTagSystem.searchFilesByTag(tag.toStdString());
-        QStringList fileList;
-        for (const auto &file : files) {
-            fileList.append(QString::fromStdString(file));
-        }
-        displayFiles(fileList);  // 显示文件列表
-    }
+    tagController->searchTag(this);
 }
-
-#include "MultiSelectDialog.h"
 
 void MainWindow::onRemoveTagClicked() {
-    QString tag = QInputDialog::getText(this, "删除标签", "请输入标签:");
-
-    if (!tag.isEmpty()) {
-        std::vector<std::string> files = fileTagSystem.searchFilesByTag(tag.toStdString());
-        if (files.empty()) {
-            QMessageBox::information(this, "无文件", "没有文件包含此标签。");
-            Logger::instance().log("没有文件包含此标签。");
-            return;
-        }
-
-        QStringList fileList;
-        for (const auto &file : files) {
-            fileList.append(QString::fromStdString(file));
-        }
-
-        // fileList.append("删除所有文件");  // 添加 "删除所有文件" 选项
-
-        MultiSelectDialog dialog(fileList, this);
-        if (dialog.exec() == QDialog::Accepted) {
-            QStringList selectedFiles = dialog.selectedItems();
-            if (selectedFiles.contains("删除所有文件")) {
-                for (const auto &file : files) {
-                    fileTagSystem.removeTag(file, tag.toStdString());
-                }
-                QMessageBox::information(this, "标签已删除", "标签已从所有文件删除。");
-                Logger::instance().log("标签已从所有文件删除。");
-            } else {
-                for (const auto &selectedFile : selectedFiles) {
-                    fileTagSystem.removeTag(selectedFile.toStdString(), tag.toStdString());
-                }
-                QMessageBox::information(this, "标签已删除", "标签已从选中的文件中删除。");
-                Logger::instance().log("标签已从选中的文件中删除。");
-            }
-            populateTags();
-        }
-    }
+    tagController->removeTag(this);
 }
 
-
 void MainWindow::onUpdateTagClicked() {
-    QString filePath = QInputDialog::getText(this, "更新标签", "请输入文件路径:");
-    QString oldTag = QInputDialog::getText(this, "更新标签", "请输入旧标签:");
-    QString newTag = QInputDialog::getText(this, "更新标签", "请输入新标签:");
-
-    if (!filePath.isEmpty() && !oldTag.isEmpty() && !newTag.isEmpty()) {
-        fileTagSystem.updateTag(filePath.toStdString(), oldTag.toStdString(), newTag.toStdString());
-        QMessageBox::information(this, "标签已更新", "文件中的标签已更新: " + filePath);
-        Logger::instance().log("文件中的标签已更新: " + filePath);
-        populateTags();
-    }
+    tagController->updateTag(this);
 }
 
 void MainWindow::onTagSelected() {
     QListWidgetItem *item = tagListWidget->currentItem();
     if (item) {
-        std::string tag = item->text().toStdString();
-        std::vector<std::string> files = fileTagSystem.searchFilesByTag(tag);
-        QStringList fileList;
-        for (const auto &file : files) {
-            fileList.append(QString::fromStdString(file));
-        }
-        displayFiles(fileList);  // 显示文件列表
+        QString tag = item->text();
+        tagController->searchTag(this);
     }
+}
+
+void MainWindow::updateTags() {
+    populateTags();
 }
 
 void MainWindow::populateTags() {
@@ -219,15 +151,13 @@ void MainWindow::populateTags() {
     }
 }
 
-void MainWindow::displayFiles(const QStringList& filepaths) {
-    // qDebug() << "displayFiles 调用参数：" << filepaths;
+void MainWindow::displayFiles(const QStringList &filepaths) {
     Logger::instance().log("displayFiles 调用参数：" + filepaths.join(", "));
 
     if (filepaths.isEmpty()) {
         fileView->setRootIndex(QModelIndex());
         fileModel->setNameFilters(QStringList());  // 清除过滤器
         fileView->update();  // 手动刷新视图
-        // qDebug() << "视图已清除";
         Logger::instance().log("视图已清除");
         return;
     }
@@ -242,7 +172,6 @@ void MainWindow::displayFiles(const QStringList& filepaths) {
     QString directory = firstFile.absolutePath();
     fileView->setRootIndex(fileModel->index(directory));
     fileView->update();  // 手动刷新视图
-    // qDebug() << "设置根目录为：" << directory;
     Logger::instance().log("设置根目录为：" + directory);
 
     // 过滤文件
@@ -250,14 +179,12 @@ void MainWindow::displayFiles(const QStringList& filepaths) {
     for (const QString &filePath : filepaths) {
         QFileInfo fileInfo(filePath);
         nameFilters << fileInfo.fileName();
-        // qDebug() << "添加过滤文件：" << fileInfo.fileName();
         Logger::instance().log("添加过滤文件：" + fileInfo.fileName());
     }
     fileModel->setNameFilters(nameFilters);
     fileModel->setNameFilterDisables(false);
     fileModel->setRootPath(directory);  // 设置根路径
     fileView->update();  // 手动刷新视图
-    // qDebug() << "设置文件名过滤器";
 
     // 设置文件名长度限制
     for (int i = 0; i < fileModel->rowCount(fileView->rootIndex()); ++i) {
@@ -266,7 +193,6 @@ void MainWindow::displayFiles(const QStringList& filepaths) {
         if (fileName.length() > 20) {  // 限制文件名长度
             QString shortName = fileName.left(17) + "...";
             fileModel->setData(index, shortName, Qt::DisplayRole);
-            // qDebug() << "截断文件名：" << fileName << "为：" << shortName;
             Logger::instance().log("截断文件名：" + fileName + "为：" + shortName);
         }
     }
@@ -318,12 +244,9 @@ void MainWindow::showFilePreview(const QString &filePath) {
 }
 
 void MainWindow::showAboutDialog() {
-    QMessageBox::about(this, "关于", "FileTag 是一个简单的文件标签工具。\n"
-                                    "版本：1.0\n"
-                                    "作者：Montee");
+    QMessageBox::about(this, "关于", "FileTag 是一个简单的文件标签工具。\n版本：1.0\n作者：Montee");
 }
 
 void MainWindow::showDocumentation() {
-    QMessageBox::information(this, "帮助文档", "使用过程中如遇到问题欢迎联系我。\n"
-                                           "邮件：2605958732@qq.com");
+    QMessageBox::information(this, "帮助文档", "使用过程中如遇到问题欢迎联系我。\n邮件：2605958732@qq.com");
 }
