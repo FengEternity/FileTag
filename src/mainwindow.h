@@ -12,8 +12,10 @@
 #include <QMenuBar>
 #include <QFile>
 #include <QTextStream>
+#include <QProgressBar> // 添加进度条的头文件
 #include "file_tag_system.h"
 #include "Logger.h"
+#include "FileProcessor.h" // 添加文件处理类的头文件
 
 class MainWindow : public QMainWindow {
 Q_OBJECT
@@ -55,6 +57,9 @@ private:
     QFileSystemModel *fileModel;  // 使用 QFileSystemModel
 
     FileTagSystem fileTagSystem;  // 添加 FileTagSystem 成员
+
+    FileProcessor *fileProcessor; // 添加文件处理类的成员
+    QProgressBar *progressBar; // 添加进度条的成员
 
     void populateTags();  // 填充标签列表
     void displayFiles(const QStringList& filepaths);  // 显示文件列表

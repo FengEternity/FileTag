@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "MultiSelectDialog.h"
+#include "FileProcessor.h"
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QSplitter>
@@ -18,7 +19,8 @@
 #include <QFileDialog>
 #include <QToolButton>
 #include <QMenu>
-
+#include <QProgressBar>
+#include <QDebug> // 添加调试信息
 
 MainWindow::MainWindow(QWidget *parent)
         : QMainWindow(parent),
@@ -29,7 +31,9 @@ MainWindow::MainWindow(QWidget *parent)
           tagListWidget(new QListWidget(this)),
           fileView(new QListView(this)),
           fileModel(new QFileSystemModel(this)),
-          fileTagSystem("tags.csv", "users.csv") {
+          fileTagSystem("tags.csv", "users.csv"),
+          fileProcessor(new FileProcessor(this)), // 初始化文件处理类
+          progressBar(new QProgressBar(this)) { // 初始化进度条
 
     setWindowTitle("FileTag");
     resize(600, 400);
@@ -106,7 +110,10 @@ MainWindow::MainWindow(QWidget *parent)
     if (file.open(QFile::ReadOnly)) {
         QString styleSheet = QTextStream(&file).readAll();
         this->setStyleSheet(styleSheet);
+        qDebug() << "Stylesheet loaded successfully.";
         file.close();
+    } else {
+        qDebug() << "Could not open stylesheet file.";
     }
 
     // 配置文件系统模型和文件视图
@@ -119,6 +126,38 @@ MainWindow::MainWindow(QWidget *parent)
     initializeView(); // 初始化为空视图
 
     populateTags(); // 填充标签列表
+
+    // 创建并添加文件处理相关的UI组件
+    QVBoxLayout *fileProcessorLayout = new QVBoxLayout;
+    QLineEdit *searchDirEdit = new QLineEdit(this);
+    QLineEdit *searchKeywordEdit = new QLineEdit(this);
+    QPushButton *searchButton = new QPushButton("搜索文件", this);
+    QListWidget *resultList = new QListWidget(this);
+    QLineEdit *uploadFilePathEdit = new QLineEdit(this);
+    QPushButton *uploadButton = new QPushButton("上传文件", this);
+    QLineEdit *downloadUrlEdit = new QLineEdit(this);
+    QLineEdit *downloadSavePathEdit = new QLineEdit(this);
+    QPushButton *downloadButton = new QPushButton("下载文件", this);
+
+    fileProcessorLayout->addWidget(new QLabel("搜索目录:", this));
+    fileProcessorLayout->addWidget(searchDirEdit);
+    fileProcessorLayout->addWidget(new QLabel("搜索关键字:", this));
+    fileProcessorLayout->addWidget(searchKeywordEdit);
+    fileProcessorLayout->addWidget(searchButton);
+    fileProcessorLayout->addWidget(new QLabel("搜索结果:", this));
+    fileProcessorLayout->addWidget(resultList);
+    fileProcessorLayout->addWidget(new QLabel("上传文件路径:", this));
+    fileProcessorLayout->addWidget(uploadFilePathEdit);
+    fileProcessorLayout->addWidget(uploadButton);
+    fileProcessorLayout->addWidget(new QLabel("下载文件URL:", this));
+    fileProcessorLayout->addWidget(downloadUrlEdit);
+    fileProcessorLayout->addWidget(new QLabel("下载保存路径:", this));
+    fileProcessorLayout->addWidget(downloadSavePathEdit);
+    fileProcessorLayout->addWidget(downloadButton);
+    fileProcessorLayout->addWidget(progressBar);
+
+    sideBarLayout->addLayout(fileProcessorLayout);
+    mainLayout->addLayout(sideBarLayout);
 
     // 连接信号和槽
     connect(tagListWidget, &QListWidget::itemClicked, this, &MainWindow::onTagSelected);
@@ -134,22 +173,38 @@ MainWindow::MainWindow(QWidget *parent)
     connect(aboutAction, &QAction::triggered, this, &MainWindow::showAboutDialog);
     connect(documentationAction, &QAction::triggered, this, &MainWindow::showDocumentation);
 
-    // 连接文件动作的信号和槽
-    connect(fileAction, &QAction::triggered, this, &MainWindow::onFileActionClicked);
+    // 连接文件处理相关UI组件的信号和槽
+    connect(searchButton, &QPushButton::clicked, this, [this, searchDirEdit, searchKeywordEdit]() {
+        fileProcessor->searchFiles(searchDirEdit->text(), searchKeywordEdit->text());
+    });
+
+    connect(uploadButton, &QPushButton::clicked, this, [this, uploadFilePathEdit]() {
+        fileProcessor->uploadFile(uploadFilePathEdit->text(), QUrl("http://yourserver.com/upload"));
+    });
+
+    connect(downloadButton, &QPushButton::clicked, this, [this, downloadUrlEdit, downloadSavePathEdit]() {
+        fileProcessor->downloadFile(QUrl(downloadUrlEdit->text()), downloadSavePathEdit->text());
+    });
+
+    connect(fileProcessor, &FileProcessor::searchFinished, resultList, &QListWidget::addItems);
+    connect(fileProcessor, &FileProcessor::uploadProgress, progressBar, &QProgressBar::setValue);
+    connect(fileProcessor, &FileProcessor::downloadProgress, progressBar, &QProgressBar::setValue);
 }
 
-// 文件动作的槽函数实现
+MainWindow::~MainWindow() {
+    // 清理资源
+    delete fileProcessor;
+    delete progressBar;
+}
+
 void MainWindow::onFileActionClicked() {
-//    // 实现文件动作的处理逻辑，例如打开文件对话框
-//    QString filePath = QFileDialog::getOpenFileName(this, "选择文件", "", "所有文件 (*)");
-//    if (!filePath.isEmpty()) {
-//        // 处理选定的文件路径
-//        QMessageBox::information(this, "文件已选择", "您选择的文件是: " + filePath);
-//    }
+    // 实现文件动作的处理逻辑，例如打开文件对话框
+    QString filePath = QFileDialog::getOpenFileName(this, "选择文件", "", "所有文件 (*)");
+    if (!filePath.isEmpty()) {
+        // 处理选定的文件路径
+        QMessageBox::information(this, "文件已选择", "您选择的文件是: " + filePath);
+    }
 }
-
-
-MainWindow::~MainWindow() {}
 
 void MainWindow::initializeView() {
     QStringListModel *emptyModel = new QStringListModel(this);
