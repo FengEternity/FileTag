@@ -27,6 +27,7 @@ private slots:
     void onSearchTagClicked();
     void onRemoveTagClicked();
     void onUpdateTagClicked();
+    void onFileActionClicked();
     void onTagSelected();
     void onFileClicked(const QModelIndex &index);  // 文件点击槽函数
     void showAboutDialog();

@@ -4,7 +4,6 @@
 #include <QMessageBox>
 #include <QSplitter>
 #include <QVBoxLayout>
-#include <QHBoxLayout>
 #include <QLabel>
 #include <QListWidget>
 #include <QListView>
@@ -28,18 +27,21 @@ MainWindow::MainWindow(QWidget *parent)
           sideBarLayout(new QVBoxLayout),
           contentLayout(new QVBoxLayout),
           tagListWidget(new QListWidget(this)),
-          fileView(new QListView(this)),  // 初始化 fileView
-          fileModel(new QFileSystemModel(this)),  // 初始化 fileModel
+          fileView(new QListView(this)),
+          fileModel(new QFileSystemModel(this)),
           fileTagSystem("tags.csv", "users.csv") {
 
     setWindowTitle("FileTag");
-    resize(600,400);
+    resize(600, 400);
 
+    // 创建菜单栏并添加到窗口
     menuBar = new QMenuBar(this);
     setMenuBar(menuBar);
 
+    // 创建文件菜单
     fileMenu = menuBar->addMenu(tr("文件"));
 
+    // 创建标签菜单并添加相关动作
     tagMenu = menuBar->addMenu(tr("标签"));
     tagMenu->addAction(tr("添加标签"), this, &MainWindow::onAddTagClicked);
     tagMenu->addAction(tr("搜索标签"), this, &MainWindow::onSearchTagClicked);
@@ -52,10 +54,13 @@ MainWindow::MainWindow(QWidget *parent)
     QAction *updateTagAction = new QAction("更新标签", this);
 
     toolBar = new QToolBar(this);
+
+    // 创建工具按钮
     QToolButton *toolButton = new QToolButton(this);
     toolButton->setText("标签");
     toolButton->setPopupMode(QToolButton::InstantPopup);
 
+    // 创建标签菜单并添加到工具按钮
     QMenu *tagMenu = new QMenu(toolButton);
     tagMenu->addAction(addTagAction);
     tagMenu->addAction(searchTagAction);
@@ -63,29 +68,40 @@ MainWindow::MainWindow(QWidget *parent)
     tagMenu->addAction(updateTagAction);
     toolButton->setMenu(tagMenu);
 
+    // 将工具按钮添加到工具栏
     toolBar->addWidget(toolButton);
+
+    // 添加新的文件动作
+    QAction *fileAction = new QAction("文件", this);
+    toolBar->addAction(fileAction);
+
+    // 将工具栏添加到窗口的顶部工具栏区域
     addToolBar(Qt::TopToolBarArea, toolBar);
 
-
+    // 创建帮助菜单并添加相关动作
     helpMenu = menuBar->addMenu(tr("帮助"));
-    QAction *aboutAction = new QAction(tr("关于"),this);
-    QAction *documentationAction = new QAction(tr("文档"),this);
+    QAction *aboutAction = new QAction(tr("关于"), this);
+    QAction *documentationAction = new QAction(tr("文档"), this);
     helpMenu->addAction(aboutAction);
     helpMenu->addAction(documentationAction);
 
-
+    // 创建分割器并添加标签列表和文件视图
     QSplitter *splitter = new QSplitter(Qt::Horizontal);
     splitter->addWidget(tagListWidget);
-    splitter->addWidget(fileView);  // 添加 fileView
+    splitter->addWidget(fileView);
 
+    // 设置分割器的伸缩因子
     splitter->setStretchFactor(0, 1);
     splitter->setStretchFactor(1, 4);
 
+    // 将分割器添加到主布局
     mainLayout->addWidget(splitter);
 
+    // 设置中央窗口部件的布局
     centralWidget->setLayout(mainLayout);
     setCentralWidget(centralWidget);
 
+    // 读取并应用样式表
     QFile file(":/stylesheet.qss");
     if (file.open(QFile::ReadOnly)) {
         QString styleSheet = QTextStream(&file).readAll();
@@ -93,26 +109,45 @@ MainWindow::MainWindow(QWidget *parent)
         file.close();
     }
 
+    // 配置文件系统模型和文件视图
     fileModel->setRootPath(QDir::currentPath());
     fileView->setModel(fileModel);
     fileView->setRootIndex(fileModel->index(QDir::currentPath()));
-    fileView->setViewMode(QListView::IconMode);  // 设置为图标模式
-    fileView->setIconSize(QSize(64, 64));  // 设置图标大小
+    fileView->setViewMode(QListView::IconMode); // 设置文件视图为图标模式
+    fileView->setIconSize(QSize(64, 64)); // 设置图标大小
 
-    initializeView();  // 初始化为空视图
+    initializeView(); // 初始化为空视图
 
-    populateTags();
+    populateTags(); // 填充标签列表
 
+    // 连接信号和槽
     connect(tagListWidget, &QListWidget::itemClicked, this, &MainWindow::onTagSelected);
-    connect(fileView, &QListView::clicked, this, &MainWindow::onFileClicked);  // 连接文件点击信号
+    connect(fileView, &QListView::clicked, this, &MainWindow::onFileClicked);
 
+    // 连接标签相关动作的信号和槽
     connect(addTagAction, &QAction::triggered, this, &MainWindow::onAddTagClicked);
     connect(searchTagAction, &QAction::triggered, this, &MainWindow::onSearchTagClicked);
     connect(removeTagAction, &QAction::triggered, this, &MainWindow::onRemoveTagClicked);
     connect(updateTagAction, &QAction::triggered, this, &MainWindow::onUpdateTagClicked);
+
+    // 连接帮助相关动作的信号和槽
     connect(aboutAction, &QAction::triggered, this, &MainWindow::showAboutDialog);
     connect(documentationAction, &QAction::triggered, this, &MainWindow::showDocumentation);
+
+    // 连接文件动作的信号和槽
+    connect(fileAction, &QAction::triggered, this, &MainWindow::onFileActionClicked);
 }
+
+// 文件动作的槽函数实现
+void MainWindow::onFileActionClicked() {
+//    // 实现文件动作的处理逻辑，例如打开文件对话框
+//    QString filePath = QFileDialog::getOpenFileName(this, "选择文件", "", "所有文件 (*)");
+//    if (!filePath.isEmpty()) {
+//        // 处理选定的文件路径
+//        QMessageBox::information(this, "文件已选择", "您选择的文件是: " + filePath);
+//    }
+}
+
 
 MainWindow::~MainWindow() {}
 
