@@ -13,6 +13,7 @@
 #include <QFile>
 #include <QTextStream>
 #include "file_tag_system.h"
+#include "Logger.h"
 
 class MainWindow : public QMainWindow {
 Q_OBJECT
