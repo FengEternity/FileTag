@@ -6,9 +6,9 @@ MultiSelectDialog::MultiSelectDialog(const QStringList &items, QWidget *parent)
     listWidget->addItems(items);
     listWidget->setSelectionMode(QAbstractItemView::MultiSelection);
 
-    selectAllButton = new QPushButton(tr("Select All"), this);
-    okButton = new QPushButton(tr("OK"), this);
-    cancelButton = new QPushButton(tr("Cancel"), this);
+    selectAllButton = new QPushButton(tr("选择全部"), this);
+    okButton = new QPushButton(tr("确定"), this);
+    cancelButton = new QPushButton(tr("取消"), this);
 
     connect(selectAllButton, &QPushButton::clicked, this, &MultiSelectDialog::selectAll);
     connect(okButton, &QPushButton::clicked, this, &QDialog::accept);
