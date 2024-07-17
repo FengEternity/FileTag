@@ -2,8 +2,8 @@
 #define FILESEARCH_H
 
 #include <QWidget>
-#include <QListWidget>
 #include <QLineEdit>
+#include <QListWidget>
 #include <QPushButton>
 #include "CustomModel.h"
 
@@ -11,8 +11,7 @@ namespace Ui {
     class FileSearch;
 }
 
-class FileSearch : public QWidget
-{
+class FileSearch : public QWidget {
 Q_OBJECT
 
 public:
@@ -21,14 +20,16 @@ public:
 
 private slots:
     void onSearchButtonClicked();
+    void onFileFound(const QString &filePath);
+    void onSearchFinished();
 
 private:
     Ui::FileSearch *ui;
-    QListWidget *resultListWidget;  // 使用 QListWidget
-    CustomModel *resultModel;  // Use CustomModel instead of QStandardItemModel
+    CustomModel *resultModel;
+    QPushButton *searchButton;
     QLineEdit *searchLineEdit;
     QLineEdit *pathLineEdit;
-    QPushButton *searchButton;
+    QListWidget *resultListWidget;
 };
 
 #endif // FILESEARCH_H

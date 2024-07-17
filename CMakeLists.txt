@@ -39,6 +39,8 @@ add_executable(FileTag
         resources/resources.qrc
         src/CustomModel.h
         src/CustomModel.cpp
+        src/FileSearchThread.cpp
+        src/FileSearchThread.h
 )
 
 # 设置包含目录

@@ -1,12 +1,16 @@
 #include "FileSearch.h"
 #include "ui_FileSearch.h"
 #include "Logger.h"
+#include "FileSearchThread.h"
 #include <QDir>
 #include <QDirIterator>
 #include <QVBoxLayout>
 #include <QDebug>
 #include <iostream>
 #include <QCoreApplication>
+#include <QThread>
+#include <QMutex>
+#include <QWaitCondition>
 
 FileSearch::FileSearch(QWidget *parent) :
         QWidget(parent),
@@ -52,30 +56,30 @@ void FileSearch::onSearchButtonClicked() {
     resultListWidget->clear();
     Logger::instance().log("Search started for keyword: " + searchKeyword + " in path: " + searchPath);
 
-    // 强制刷新视图
+    // 创建并启动文件搜索线程
+    FileSearchThread *searchThread = new FileSearchThread(searchKeyword, searchPath, this);
+    connect(searchThread, &FileSearchThread::fileFound, this, &FileSearch::onFileFound);
+    connect(searchThread, &FileSearchThread::searchFinished, this, &FileSearch::onSearchFinished);
+    searchThread->start();
+}
+
+void FileSearch::onFileFound(const QString &filePath) {
+    resultListWidget->addItem(filePath);
+    Logger::instance().log("Found file: " + filePath);
+
+    // 每次找到文件后刷新视图
     resultListWidget->reset();
     resultListWidget->update();
     resultListWidget->viewport()->update();
     QCoreApplication::processEvents(); // 强制处理所有挂起的事件
+}
 
-    // 进行文件搜索
-    QDirIterator it(searchPath, QDir::Files, QDirIterator::Subdirectories);
-    while (it.hasNext()) {
-        QString filePath = it.next();
-        if (filePath.contains(searchKeyword, Qt::CaseInsensitive)) {
-            resultListWidget->addItem(filePath);
-            Logger::instance().log("Found file: " + filePath);
-
-            // 每次找到文件后刷新视图
-            resultListWidget->reset();
-            resultListWidget->update();
-            resultListWidget->viewport()->update();
-            QCoreApplication::processEvents(); // 强制处理所有挂起的事件
-        }
-    }
-
+void FileSearch::onSearchFinished() {
     // 搜索完成后，滚动到第一个结果项
     if (resultListWidget->count() > 0) {
         resultListWidget->scrollToItem(resultListWidget->item(0));
     }
 }
+
+// 添加以下行以包含生成的MOC文件
+#include "filesearch.moc"
