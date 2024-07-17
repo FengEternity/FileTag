@@ -147,16 +147,17 @@ void MainWindow::onFileActionClicked() {
 }
 
 void MainWindow::onFileSearchClicked() {
-    // 清空现有的中央窗口部件
-    if (centralWidget) {
-        delete centralWidget;
-        setCentralWidget(nullptr);
+    // 取回现有的中央窗口部件
+    QWidget *currentCentralWidget = takeCentralWidget();
+    if (currentCentralWidget) {
+        delete currentCentralWidget;
     }
 
     // 创建新的 FileSearch 并设置为中央窗口部件
     FileSearch *fileSearch = new FileSearch(this);
     setCentralWidget(fileSearch);
 }
+
 
 void MainWindow::onFileTransferClicked() {
     // 文件传输功能的空实现
