@@ -26,8 +26,19 @@ add_executable(FileTag
         src/MultiSelectDialog.cpp
         src/Logger.cpp
         src/FileProcessor.cpp
-        src/FileSearch.cpp
+        src/filesearch.cpp
+        src/file_tag_system.h
+        src/tag_manager.h
+        src/user_manager.h
+        src/mainwindow.h
+        src/MultiSelectDialog.h
+        src/Logger.h
+        src/FileProcessor.h
+        src/FileSearch.h
+        src/FileSearch.ui
         resources/resources.qrc
+        src/CustomModel.h
+        src/CustomModel.cpp
 )
 
 # 设置包含目录

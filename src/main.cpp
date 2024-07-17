@@ -1,6 +1,5 @@
 #include <QApplication>
 #include <QFile>
-#include <QMainWindow>
 #include "mainwindow.h"
 #include "Logger.h"
 
