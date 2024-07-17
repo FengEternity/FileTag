@@ -11,7 +11,7 @@
 FileSearch::FileSearch(QWidget *parent) :
         QWidget(parent),
         ui(new Ui::FileSearch),
-        resultModel(new CustomModel(this))  // Use the custom model
+        resultModel(new CustomModel(this))  // 使用自定义模型
 {
     ui->setupUi(this);
 
@@ -50,8 +50,7 @@ void FileSearch::onSearchButtonClicked() {
 
     // 清空之前的搜索结果
     resultListWidget->clear();
-    // resultListWidget->addItem("开始搜索"); // 添加“开始搜索”信息
-    qDebug() << "Search started for keyword:" << searchKeyword << "in path:" << searchPath;
+    Logger::instance().log("Search started for keyword: " + searchKeyword + " in path: " + searchPath);
 
     // 强制刷新视图
     resultListWidget->reset();
@@ -65,19 +64,17 @@ void FileSearch::onSearchButtonClicked() {
         QString filePath = it.next();
         if (filePath.contains(searchKeyword, Qt::CaseInsensitive)) {
             resultListWidget->addItem(filePath);
-            qDebug() << "Added item:" << filePath; // 调试输出
-            Logger::instance().log("Added item: " + filePath);
+            Logger::instance().log("Found file: " + filePath);
+
+            // 每次找到文件后刷新视图
+            resultListWidget->reset();
+            resultListWidget->update();
+            resultListWidget->viewport()->update();
+            QCoreApplication::processEvents(); // 强制处理所有挂起的事件
         }
     }
 
-    qDebug() << "Total items found:" << resultListWidget->count();
-
-    // 强制刷新视图
-    resultListWidget->reset();
-    resultListWidget->update();
-    resultListWidget->viewport()->update();
-    qDebug() << "List view updated.";
-
+    // 搜索完成后，滚动到第一个结果项
     if (resultListWidget->count() > 0) {
         resultListWidget->scrollToItem(resultListWidget->item(0));
     }
