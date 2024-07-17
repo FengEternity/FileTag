@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 # 启用自动生成MOC文件
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)  # 启用自动生成UIC文件
 
 # 查找Qt6包
 set(CMAKE_PREFIX_PATH "/opt/homebrew/Cellar/qt/6.7.0_1/lib/cmake")
@@ -15,31 +16,25 @@ find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Network)
 # 添加Qt6模块
 set(QT_LIBRARIES Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Network)
 
-# 将 main.cpp、file_tag_system.cpp 和 tag_manager.cpp 编译为可执行文件 FileTag
+# 将所有源文件和头文件添加到可执行文件 FileTag 中
 add_executable(FileTag
         src/main.cpp
         src/file_tag_system.cpp
         src/tag_manager.cpp
         src/user_manager.cpp
-        src/file_tag_system.h
-        src/tag_manager.h
-        src/user_manager.h
         src/mainwindow.cpp
-        src/mainwindow.h
-        resources/resources.qrc
         src/MultiSelectDialog.cpp
-        src/MultiSelectDialog.h
         src/Logger.cpp
-        src/Logger.h
         src/FileProcessor.cpp
-        src/FileProcessor.h
+        src/FileSearch.cpp
+        resources/resources.qrc
 )
-
-# 链接Qt6库
-target_link_libraries(FileTag ${QT_LIBRARIES})
 
 # 设置包含目录
 target_include_directories(FileTag PRIVATE ${CMAKE_SOURCE_DIR}/src)
+
+# 链接Qt6库
+target_link_libraries(FileTag ${QT_LIBRARIES})
 
 # 添加自定义目标 clean-all，用于清理生成的文件
 add_custom_target(clean-all

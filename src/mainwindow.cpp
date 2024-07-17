@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "MultiSelectDialog.h"
+#include "FileSearch.h"
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QSplitter>
@@ -51,10 +52,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 创建标签菜单和动作
     tagMenu = menuBar->addMenu(tr("标签"));
-    QAction *addTagAction = new QAction(tr("添加标签"), this);
-    QAction *searchTagAction = new QAction(tr("搜索标签"), this);
-    QAction *removeTagAction = new QAction(tr("删除标签"), this);
-    QAction *updateTagAction = new QAction(tr("更新标签"), this);
+    QAction *addTagAction = new QAction(tr("添加"), this);
+    QAction *searchTagAction = new QAction(tr("搜索"), this);
+    QAction *removeTagAction = new QAction(tr("删除"), this);
+    QAction *updateTagAction = new QAction(tr("更新"), this);
     tagMenu->addAction(addTagAction);
     tagMenu->addAction(searchTagAction);
     tagMenu->addAction(removeTagAction);
@@ -146,7 +147,15 @@ void MainWindow::onFileActionClicked() {
 }
 
 void MainWindow::onFileSearchClicked() {
-    // 文件搜索功能的空实现
+    // 清空现有的中央窗口部件
+    if (centralWidget) {
+        delete centralWidget;
+        setCentralWidget(nullptr);
+    }
+
+    // 创建新的 FileSearch 并设置为中央窗口部件
+    FileSearch *fileSearch = new FileSearch(this);
+    setCentralWidget(fileSearch);
 }
 
 void MainWindow::onFileTransferClicked() {

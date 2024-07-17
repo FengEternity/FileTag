@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+    <class>FileSearch</class>
+    <widget class="QWidget" name="FileSearch">
+        <property name="geometry">
+            <rect>
+                <x>0</x>
+                <y>0</y>
+                <width>400</width>
+                <height>300</height>
+            </rect>
+        </property>
+        <property name="windowTitle">
+            <string>文件搜索</string>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout">
+            <item>
+                <widget class="QLabel" name="label">
+                    <property name="text">
+                        <string>请输入搜索词：</string>
+                    </property>
+                </widget>
+            </item>
+            <item>
+                <widget class="QLineEdit" name="searchLineEdit"/>
+            </item>
+            <item>
+                <widget class="QPushButton" name="searchButton">
+                    <property name="text">
+                        <string>搜索</string>
+                    </property>
+                </widget>
+            </item>
+            <item>
+                <widget class="QListWidget" name="resultListWidget"/>
+            </item>
+        </layout>
+    </widget>
+    <resources/>
+    <connections/>
+</ui>
