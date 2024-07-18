@@ -74,16 +74,21 @@ void FileSearch::onSearchButtonClicked() {
 
 // 搜索到文件时的槽函数
 void FileSearch::onFileFound(const QString &filePath) {
-    static QStringList filesBatch;
+    static QVector<QString> filesBatch;
     filesBatch.append(filePath);
     Logger::instance().log("Found file: " + filePath);
 
-    if (++updateCounter % 100 == 0) { // 每找到100个文件更新一次
-        resultListWidget->addItems(filesBatch);
-        filesBatch.clear();
-        resultListWidget->reset();
-        resultListWidget->update();
-        resultListWidget->viewport()->update();
+    if (++updateCounter % 500 == 0) { // 每找到500个文件更新一次
+        QVector<QString> filesBatchCopy = filesBatch; // 创建一个副本
+        filesBatch.clear(); // 清空原有的批量文件列表
+
+        auto updateUI = [this, filesBatchCopy]() {
+            resultListWidget->addItems(filesBatchCopy.toList());
+            resultListWidget->reset();
+            resultListWidget->update();
+            resultListWidget->viewport()->update();
+        };
+        QMetaObject::invokeMethod(this, updateUI, Qt::QueuedConnection);
     }
 }
 
