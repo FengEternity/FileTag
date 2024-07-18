@@ -16,7 +16,8 @@ FileSearch::FileSearch(QWidget *parent) :
         threadPool(new QThreadPool(this)),
         timer(),
         updateCounter(0),
-        activeTaskCount(0) // 初始化活动任务计数器
+        activeTaskCount(0), // 初始化活动任务计数器
+        totalDirectories(0) // 初始化目录总数
 {
     ui->setupUi(this);
 
@@ -25,6 +26,7 @@ FileSearch::FileSearch(QWidget *parent) :
     pathLineEdit = ui->pathLineEdit;
     resultListWidget = ui->resultListWidget;
     finishButton = ui->finishButton;
+    progressBar = ui->progressBar;
 
     connect(searchButton, &QPushButton::clicked, this, &FileSearch::onSearchButtonClicked);
     connect(finishButton, &QPushButton::clicked, this, &FileSearch::onFinishButtonClicked);
@@ -60,7 +62,20 @@ void FileSearch::onSearchButtonClicked() {
 
     timer.start();
     activeTaskCount = 0;
+    updateCounter = 0;
+    totalDirectories = 0;
 
+    // 第一次遍历计算目录总数
+    QDirIterator dirIt(searchPath, QDir::Dirs | QDir::NoDotAndDotDot);
+    while (dirIt.hasNext()) {
+        dirIt.next();
+        totalDirectories++;
+    }
+
+    progressBar->setMaximum(totalDirectories);
+    progressBar->setValue(0);
+
+    // 第二次遍历进行搜索
     QDirIterator it(searchPath, QDir::Dirs | QDir::NoDotAndDotDot);
     while (it.hasNext()) {
         QString dirPath = it.next();
@@ -95,9 +110,12 @@ void FileSearch::onFileFound(const QString &filePath) {
 // 搜索完成时的槽函数
 void FileSearch::onSearchFinished() {
     activeTaskCount--;
+    progressBar->setValue(progressBar->value() + 1); // 更新进度条
+
     if (activeTaskCount == 0) {
         qint64 elapsedTime = timer.elapsed();
         onSearchTime(elapsedTime);
+        progressBar->setValue(totalDirectories); // 搜索完成后将进度条设为最大值
     }
 }
 
@@ -113,4 +131,5 @@ void FileSearch::onFinishButtonClicked() {
     qint64 elapsedTime = timer.elapsed();
     QMessageBox::information(this, "搜索中断", QString("搜索线程被中断，已耗时: %1 毫秒").arg(elapsedTime));
     Logger::instance().log(QString("搜索线程被中断，已耗时: %1 毫秒").arg(elapsedTime));
+    progressBar->setValue(progressBar->maximum()); // 搜索中断时将进度条设为最大值
 }
