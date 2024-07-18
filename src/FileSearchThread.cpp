@@ -1,14 +1,17 @@
 #include "FileSearchThread.h"
-#include "Logger.h"
 #include <QMutexLocker>
 #include <QDirIterator>
-#include <QDialog>
+#include <QCoreApplication>
+#include <QEventLoop>
+#include "Logger.h" // 引入 Logger 头文件
 
 FileSearchThread::FileSearchThread(const QString &keyword, const QString &path, QObject *parent)
         : QThread(parent), searchKeyword(keyword), searchPath(path), stopped(false) {}
 
 void FileSearchThread::run() {
-    QDirIterator it(searchPath, QDir::Files, QDirIterator::Subdirectories);
+    timer.start(); // 开始计时
+    QDirIterator it(searchPath, QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
+    QEventLoop loop;
     while (it.hasNext()) {
         {
             QMutexLocker locker(&mutex);
@@ -19,13 +22,16 @@ void FileSearchThread::run() {
         }
 
         QString filePath = it.next();
-        if (filePath.contains(searchKeyword, Qt::CaseInsensitive)) {
+        QString fileName = it.fileName();
+
+        if (fileName.contains(searchKeyword, Qt::CaseInsensitive)) {
             emit fileFound(filePath); // 发射 fileFound 信号
         }
 
-        QThread::msleep(1); // 小休眠，减少CPU占用
+        loop.processEvents(QEventLoop::AllEvents, static_cast<int>(0.1));
     }
     emit searchFinished(); // 搜索完成后发射 searchFinished 信号
+    emit searchTime(timer.elapsed()); // 发射 searchTime 信号，传递耗时
 }
 
 void FileSearchThread::stop() {

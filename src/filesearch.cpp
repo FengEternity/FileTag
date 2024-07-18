@@ -3,11 +3,16 @@
 #include "Logger.h"
 #include "FileSearchThread.h"
 #include <QDir>
+#include <QDirIterator>
 #include <QVBoxLayout>
+#include <QDebug>
 #include <iostream>
 #include <QCoreApplication>
+#include <QThread>
+#include <QMutex>
 #include <QWaitCondition>
-#include <QMessageBox>
+#include <QMessageBox> // 引入 QMessageBox 头文件
+#include <QElapsedTimer> // 引入 QElapsedTimer
 
 FileSearch::FileSearch(QWidget *parent) :
         QWidget(parent),
@@ -63,9 +68,11 @@ void FileSearch::onSearchButtonClicked() {
         delete currentSearchThread;
     }
 
+    timer.start(); // 开始计时
     currentSearchThread = new FileSearchThread(searchKeyword, searchPath, this);
     connect(currentSearchThread, &FileSearchThread::fileFound, this, &FileSearch::onFileFound);
     connect(currentSearchThread, &FileSearchThread::searchFinished, this, &FileSearch::onSearchFinished);
+    connect(currentSearchThread, &FileSearchThread::searchTime, this, &FileSearch::onSearchTime); // 连接 searchTime 信号和槽
     currentSearchThread->start();
 }
 
@@ -88,6 +95,12 @@ void FileSearch::onSearchFinished() {
     }
 }
 
+void FileSearch::onSearchTime(qint64 elapsedTime) {
+    // 显示搜索耗时
+    QMessageBox::information(this, "搜索完成", QString("搜索耗时: %1 毫秒").arg(elapsedTime));
+    Logger::instance().log(QString("搜索耗时: %1 毫秒").arg(elapsedTime));
+}
+
 void FileSearch::onFinishButtonClicked() {
     if (currentSearchThread) {
         currentSearchThread->stop();
@@ -95,6 +108,9 @@ void FileSearch::onFinishButtonClicked() {
         delete currentSearchThread;
         currentSearchThread = nullptr;
 
-        QMessageBox::information(this, "搜索中断", "搜索已经停止");
+        // 计算并显示耗时
+        qint64 elapsedTime = timer.elapsed();
+        // QMessageBox::information(this, "搜索中断", QString("搜索线程被中断，已耗时: %1 毫秒").arg(elapsedTime));
+        Logger::instance().log(QString("搜索线程被中断，已耗时: %1 毫秒").arg(elapsedTime));
     }
 }

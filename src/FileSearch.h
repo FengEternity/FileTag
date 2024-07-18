@@ -24,6 +24,7 @@ private slots:
     void onFileFound(const QString &filePath);
     void onSearchFinished();
     void onFinishButtonClicked();  // 新增的槽函数
+    void onSearchTime(qint64 elapsedTime); // 新增的槽函数
 
 private:
     Ui::FileSearch *ui;
@@ -34,6 +35,7 @@ private:
     QListWidget *resultListWidget;
     QPushButton *finishButton;      // 新增
     FileSearchThread *currentSearchThread; // 新增
+    QElapsedTimer timer; // 新增
 };
 
 #endif // FILESEARCH_H

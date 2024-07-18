@@ -5,6 +5,7 @@
 #include <QString>
 #include <QDirIterator>
 #include <QMutex>
+#include <QElapsedTimer> // 新增
 
 class FileSearchThread : public QThread {
 Q_OBJECT
@@ -17,12 +18,14 @@ public:
 signals:
     void fileFound(const QString &filePath);
     void searchFinished();
+    void searchTime(qint64 elapsedTime); // 新增的信号
 
 private:
     QString searchKeyword;
     QString searchPath;
     bool stopped;
     QMutex mutex;
+    QElapsedTimer timer; // 新增
 };
 
 #endif // FILESEARCHTHREAD_H
