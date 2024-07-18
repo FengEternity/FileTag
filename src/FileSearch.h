@@ -7,7 +7,7 @@
 #include <QPushButton>
 #include "CustomModel.h"
 #include "FileSearchThread.h"
-#include <QElapsedTimer> // 确保包含 QElapsedTimer
+#include <QElapsedTimer>
 #include <QVector>
 
 namespace Ui {
@@ -38,6 +38,7 @@ private:
     QPushButton *finishButton;
     QVector<FileSearchThread*> searchThreads; // 新增：用于存储多个搜索线程
     QElapsedTimer timer; // 新增：用于手动计算时间
+    int updateCounter; // 新增：用于限制UI更新频率
 };
 
 #endif // FILESEARCH_H

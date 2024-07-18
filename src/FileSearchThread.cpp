@@ -28,7 +28,7 @@ void FileSearchThread::run() {
             emit fileFound(filePath); // 发射 fileFound 信号
         }
 
-        loop.processEvents(QEventLoop::AllEvents, static_cast<int>(0.1));
+        loop.processEvents(QEventLoop::AllEvents, static_cast<int>(10));
     }
     emit searchFinished(); // 搜索完成后发射 searchFinished 信号
     emit searchTime(timer.elapsed()); // 发射 searchTime 信号，传递耗时
