@@ -3,19 +3,17 @@
 #include "Logger.h"
 #include "FileSearchThread.h"
 #include <QDir>
-#include <QDirIterator>
 #include <QVBoxLayout>
-#include <QDebug>
 #include <iostream>
 #include <QCoreApplication>
-#include <QThread>
-#include <QMutex>
 #include <QWaitCondition>
+#include <QMessageBox>
 
 FileSearch::FileSearch(QWidget *parent) :
         QWidget(parent),
         ui(new Ui::FileSearch),
-        resultModel(new CustomModel(this))  // 使用自定义模型
+        resultModel(new CustomModel(this)),
+        currentSearchThread(nullptr)  // 初始化指针
 {
     ui->setupUi(this);
 
@@ -24,14 +22,14 @@ FileSearch::FileSearch(QWidget *parent) :
     searchLineEdit = ui->searchLineEdit;
     pathLineEdit = ui->pathLineEdit;
     resultListWidget = ui->resultListWidget;
+    finishButton = ui->finishButton;  // 初始化 finishButton
 
     // 连接信号和槽
     connect(searchButton, &QPushButton::clicked, this, &FileSearch::onSearchButtonClicked);
+    connect(finishButton, &QPushButton::clicked, this, &FileSearch::onFinishButtonClicked);  // 连接信号和槽
 
-    // 初始化 resultListWidget
-    qDebug() << "List view model set.";
+    Logger::instance().log("List view model set.");
 
-    // 检查是否已有布局，避免重复设置
     if (!layout()) {
         QVBoxLayout *layout = new QVBoxLayout(this);
         layout->addWidget(resultListWidget);
@@ -40,6 +38,11 @@ FileSearch::FileSearch(QWidget *parent) :
 }
 
 FileSearch::~FileSearch() {
+    if (currentSearchThread) {
+        currentSearchThread->stop();
+        currentSearchThread->wait();
+        delete currentSearchThread;
+    }
     delete ui;
 }
 
@@ -47,27 +50,29 @@ void FileSearch::onSearchButtonClicked() {
     QString searchKeyword = searchLineEdit->text();
     QString searchPath = pathLineEdit->text();
 
-    // 如果路径为空，则设置为根目录
     if (searchPath.isEmpty()) {
         searchPath = QDir::rootPath();
     }
 
-    // 清空之前的搜索结果
     resultListWidget->clear();
     Logger::instance().log("Search started for keyword: " + searchKeyword + " in path: " + searchPath);
 
-    // 创建并启动文件搜索线程
-    FileSearchThread *searchThread = new FileSearchThread(searchKeyword, searchPath, this);
-    connect(searchThread, &FileSearchThread::fileFound, this, &FileSearch::onFileFound);
-    connect(searchThread, &FileSearchThread::searchFinished, this, &FileSearch::onSearchFinished);
-    searchThread->start();
+    if (currentSearchThread) {
+        currentSearchThread->stop();
+        currentSearchThread->wait();
+        delete currentSearchThread;
+    }
+
+    currentSearchThread = new FileSearchThread(searchKeyword, searchPath, this);
+    connect(currentSearchThread, &FileSearchThread::fileFound, this, &FileSearch::onFileFound);
+    connect(currentSearchThread, &FileSearchThread::searchFinished, this, &FileSearch::onSearchFinished);
+    currentSearchThread->start();
 }
 
 void FileSearch::onFileFound(const QString &filePath) {
     resultListWidget->addItem(filePath);
     Logger::instance().log("Found file: " + filePath);
 
-    // 每次找到文件后刷新视图
     resultListWidget->reset();
     resultListWidget->update();
     resultListWidget->viewport()->update();
@@ -75,11 +80,21 @@ void FileSearch::onFileFound(const QString &filePath) {
 }
 
 void FileSearch::onSearchFinished() {
-    // 搜索完成后，滚动到第一个结果项
     if (resultListWidget->count() > 0) {
         resultListWidget->scrollToItem(resultListWidget->item(0));
     }
+    if (currentSearchThread) {
+        currentSearchThread = nullptr;
+    }
 }
 
-// 添加以下行以包含生成的MOC文件
-#include "filesearch.moc"
+void FileSearch::onFinishButtonClicked() {
+    if (currentSearchThread) {
+        currentSearchThread->stop();
+        currentSearchThread->wait();
+        delete currentSearchThread;
+        currentSearchThread = nullptr;
+
+        QMessageBox::information(this, "搜索中断", "搜索已经停止");
+    }
+}

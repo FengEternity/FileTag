@@ -6,6 +6,7 @@
 #include <QListWidget>
 #include <QPushButton>
 #include "CustomModel.h"
+#include "FileSearchThread.h" // 确保包含头文件
 
 namespace Ui {
     class FileSearch;
@@ -22,6 +23,7 @@ private slots:
     void onSearchButtonClicked();
     void onFileFound(const QString &filePath);
     void onSearchFinished();
+    void onFinishButtonClicked();  // 新增的槽函数
 
 private:
     Ui::FileSearch *ui;
@@ -30,6 +32,8 @@ private:
     QLineEdit *searchLineEdit;
     QLineEdit *pathLineEdit;
     QListWidget *resultListWidget;
+    QPushButton *finishButton;      // 新增
+    FileSearchThread *currentSearchThread; // 新增
 };
 
 #endif // FILESEARCH_H

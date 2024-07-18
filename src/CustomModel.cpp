@@ -1,4 +1,5 @@
 #include "CustomModel.h"
+#include "Logger.h"
 #include <QDebug>
 
 CustomModel::CustomModel(QObject *parent)
@@ -19,12 +20,14 @@ void CustomModel::addFile(const QString &filePath) {
     beginInsertRows(QModelIndex(), fileList.size(), fileList.size());
     fileList << filePath;
     endInsertRows();
-    qDebug() << "File added to model: " << filePath;
+    // qDebug() << "File added to model: " << filePath;
+    Logger::instance().log("File added to model: " + filePath);
 }
 
 void CustomModel::clear() {
     beginResetModel();
     fileList.clear();
     endResetModel();
-    qDebug() << "Model cleared.";
+    // qDebug() << "Model cleared.";
+    Logger::instance().log("Model cleared.");
 }
