@@ -6,7 +6,9 @@
 #include <QListWidget>
 #include <QPushButton>
 #include "CustomModel.h"
-#include "FileSearchThread.h" // 确保包含头文件
+#include "FileSearchThread.h"
+#include <QElapsedTimer> // 确保包含 QElapsedTimer
+#include <QVector>
 
 namespace Ui {
     class FileSearch;
@@ -23,8 +25,8 @@ private slots:
     void onSearchButtonClicked();
     void onFileFound(const QString &filePath);
     void onSearchFinished();
-    void onFinishButtonClicked();  // 新增的槽函数
-    void onSearchTime(qint64 elapsedTime); // 新增的槽函数
+    void onFinishButtonClicked();
+    void onSearchTime(qint64 elapsedTime);
 
 private:
     Ui::FileSearch *ui;
@@ -33,9 +35,9 @@ private:
     QLineEdit *searchLineEdit;
     QLineEdit *pathLineEdit;
     QListWidget *resultListWidget;
-    QPushButton *finishButton;      // 新增
-    FileSearchThread *currentSearchThread; // 新增
-    QElapsedTimer timer; // 新增
+    QPushButton *finishButton;
+    QVector<FileSearchThread*> searchThreads; // 新增：用于存储多个搜索线程
+    QElapsedTimer timer; // 新增：用于手动计算时间
 };
 
 #endif // FILESEARCH_H
