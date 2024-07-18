@@ -27,7 +27,6 @@ private slots:
     void onFileFound(const QString &filePath);
     void onSearchFinished();
     void onFinishButtonClicked();
-    void onSearchTime(qint64 elapsedTime);
 
 private:
     Ui::FileSearch *ui;
@@ -40,6 +39,8 @@ private:
     QElapsedTimer timer;
     int updateCounter;
     int activeTaskCount;
+
+    void onSearchTime(qint64 elapsedTime);
 };
 
 #endif // FILESEARCH_H

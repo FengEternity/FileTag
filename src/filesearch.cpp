@@ -67,7 +67,6 @@ void FileSearch::onSearchButtonClicked() {
         auto *task = new FileSearchThread(searchKeyword, dirPath);
         connect(task, &FileSearchThread::fileFound, this, &FileSearch::onFileFound);
         connect(task, &FileSearchThread::searchFinished, this, &FileSearch::onSearchFinished);
-        connect(task, &FileSearchThread::searchTime, this, &FileSearch::onSearchTime);
         activeTaskCount++;
         threadPool->start(task);
     }
@@ -92,9 +91,8 @@ void FileSearch::onFileFound(const QString &filePath) {
 void FileSearch::onSearchFinished() {
     activeTaskCount--;
     if (activeTaskCount == 0) {
-        if (resultListWidget->count() > 0) {
-            resultListWidget->scrollToItem(resultListWidget->item(0)); // 滚动到第一个结果
-        }
+        qint64 elapsedTime = timer.elapsed();
+        onSearchTime(elapsedTime);
     }
 }
 
