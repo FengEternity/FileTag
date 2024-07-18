@@ -87,14 +87,16 @@ void FileSearch::onSearchButtonClicked() {
 
 // 搜索到文件时的槽函数
 void FileSearch::onFileFound(const QString &filePath) {
-    resultListWidget->addItem(filePath);
+    static QStringList filesBatch;
+    filesBatch.append(filePath);
     Logger::instance().log("Found file: " + filePath);
 
     if (++updateCounter % 100 == 0) { // 每找到100个文件更新一次
+        resultListWidget->addItems(filesBatch);
+        filesBatch.clear();
         resultListWidget->reset();
         resultListWidget->update();
         resultListWidget->viewport()->update();
-        // QCoreApplication::processEvents(); // 强制处理所有挂起的事件
     }
 }
 
