@@ -43,3 +43,11 @@ QListWidget::item {
 
 QTextEdit {
     background-color: #ffffff
+}
+
+QGroupBox {
+    border: none; /* 去除边框 */
+    margin-top: 10px; /* 顶部外边距 */
+    padding: 0px; /* 内边距 */
+    background: transparent; /* 背景透明 */
+}
