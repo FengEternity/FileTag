@@ -5,10 +5,11 @@
 #include <QLineEdit>
 #include <QListWidget>
 #include <QPushButton>
-#include "CustomModel.h"
-#include "FileSearchThread.h"
+#include <QThreadPool>
 #include <QElapsedTimer>
 #include <QVector>
+
+#include "FileSearchThread.h"
 
 namespace Ui {
     class FileSearch;
@@ -30,15 +31,15 @@ private slots:
 
 private:
     Ui::FileSearch *ui;
-    CustomModel *resultModel;
+    QThreadPool *threadPool;
     QPushButton *searchButton;
     QLineEdit *searchLineEdit;
     QLineEdit *pathLineEdit;
     QListWidget *resultListWidget;
     QPushButton *finishButton;
-    QVector<FileSearchThread*> searchThreads; // 新增：用于存储多个搜索线程
-    QElapsedTimer timer; // 新增：用于手动计算时间
-    int updateCounter; // 新增：用于限制UI更新频率
+    QElapsedTimer timer;
+    int updateCounter;
+    int activeTaskCount;
 };
 
 #endif // FILESEARCH_H

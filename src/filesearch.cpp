@@ -13,10 +13,10 @@
 FileSearch::FileSearch(QWidget *parent) :
         QWidget(parent),
         ui(new Ui::FileSearch),
-        resultModel(new CustomModel(this)),
+        threadPool(new QThreadPool(this)),
         timer(),
-        searchThreads(),
-        updateCounter(0) // 初始化更新计数器
+        updateCounter(0),
+        activeTaskCount(0) // 初始化活动任务计数器
 {
     ui->setupUi(this);
 
@@ -36,17 +36,13 @@ FileSearch::FileSearch(QWidget *parent) :
         layout->addWidget(resultListWidget);
         setLayout(layout);
     }
+
+    threadPool->setMaxThreadCount(10); // 设置线程池最大线程数
 }
 
 // 析构函数，释放资源
 FileSearch::~FileSearch() {
-    for (auto thread : searchThreads) {
-        if (thread) {
-            thread->stop();
-            thread->wait();
-            delete thread;
-        }
-    }
+    threadPool->waitForDone();
     delete ui;
 }
 
@@ -62,26 +58,18 @@ void FileSearch::onSearchButtonClicked() {
     resultListWidget->clear();
     Logger::instance().log("Search started for keyword: " + searchKeyword + " in path: " + searchPath);
 
-    for (auto thread : searchThreads) {
-        if (thread) {
-            thread->stop();
-            thread->wait();
-            delete thread;
-        }
-    }
-    searchThreads.clear();
-
     timer.start();
+    activeTaskCount = 0;
 
     QDirIterator it(searchPath, QDir::Dirs | QDir::NoDotAndDotDot);
     while (it.hasNext()) {
         QString dirPath = it.next();
-        FileSearchThread* thread = new FileSearchThread(searchKeyword, dirPath, this);
-        connect(thread, &FileSearchThread::fileFound, this, &FileSearch::onFileFound);
-        connect(thread, &FileSearchThread::searchFinished, this, &FileSearch::onSearchFinished);
-        connect(thread, &FileSearchThread::searchTime, this, &FileSearch::onSearchTime);
-        searchThreads.append(thread);
-        thread->start();
+        auto *task = new FileSearchThread(searchKeyword, dirPath);
+        connect(task, &FileSearchThread::fileFound, this, &FileSearch::onFileFound);
+        connect(task, &FileSearchThread::searchFinished, this, &FileSearch::onSearchFinished);
+        connect(task, &FileSearchThread::searchTime, this, &FileSearch::onSearchTime);
+        activeTaskCount++;
+        threadPool->start(task);
     }
 }
 
@@ -102,18 +90,11 @@ void FileSearch::onFileFound(const QString &filePath) {
 
 // 搜索完成时的槽函数
 void FileSearch::onSearchFinished() {
-    bool allFinished = true;
-    for (auto thread : searchThreads) {
-        if (thread && thread->isRunning()) {
-            allFinished = false;
-            break;
-        }
-    }
-    if (allFinished) {
+    activeTaskCount--;
+    if (activeTaskCount == 0) {
         if (resultListWidget->count() > 0) {
             resultListWidget->scrollToItem(resultListWidget->item(0)); // 滚动到第一个结果
         }
-        searchThreads.clear();
     }
 }
 
@@ -125,15 +106,7 @@ void FileSearch::onSearchTime(qint64 elapsedTime) {
 
 // 中断搜索按钮点击事件
 void FileSearch::onFinishButtonClicked() {
-    for (auto thread : searchThreads) {
-        if (thread) {
-            thread->stop();
-            thread->wait();
-            delete thread;
-        }
-    }
-    searchThreads.clear();
-
+    threadPool->clear();
     qint64 elapsedTime = timer.elapsed();
     QMessageBox::information(this, "搜索中断", QString("搜索线程被中断，已耗时: %1 毫秒").arg(elapsedTime));
     Logger::instance().log(QString("搜索线程被中断，已耗时: %1 毫秒").arg(elapsedTime));
