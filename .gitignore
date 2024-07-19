@@ -4,4 +4,4 @@ cmake-build-debug/
 .vscode/
 .idea/
 Filetest/EmFile/
-CMakeLists.txt.user
+src/CMakeLists.txt.user
