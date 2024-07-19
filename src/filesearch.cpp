@@ -5,7 +5,6 @@
 #include <QDir>
 #include <QDirIterator>
 #include <QVBoxLayout>
-#include <QCoreApplication>
 #include <QMessageBox>
 #include <QElapsedTimer>
 
@@ -17,7 +16,8 @@ FileSearch::FileSearch(QWidget *parent) :
         timer(),
         updateCounter(0),
         activeTaskCount(0), // 初始化活动任务计数器
-        totalDirectories(0) // 初始化目录总数
+        totalDirectories(0), // 初始化目录总数
+        isSearching(false) // 初始化搜索状态
 {
     ui->setupUi(this);
 
@@ -40,7 +40,8 @@ FileSearch::FileSearch(QWidget *parent) :
         setLayout(layout);
     }
 
-    threadPool->setMaxThreadCount(10); // 设置线程池最大线程数
+    threadPool->setMaxThreadCount(QThread::idealThreadCount()); // 根据系统的 CPU 核心数设置最大线程数
+    Logger::instance().log("线程池初始化完成, 最大线程数: " + QString::number(threadPool->maxThreadCount()));
 }
 
 // 析构函数，释放资源
@@ -62,9 +63,11 @@ void FileSearch::onSearchButtonClicked() {
     Logger::instance().log("Search started for keyword: " + searchKeyword + " in path: " + searchPath);
 
     timer.start();
+    Logger::instance().log("搜索计时开始。");
     activeTaskCount = 0;
     updateCounter = 0;
     totalDirectories = 0;
+    isSearching = true; // 设置搜索状态为进行中
 
     // 第一次遍历计算目录总数
     QDirIterator dirIt(searchPath, QDir::Dirs | QDir::NoDotAndDotDot);
@@ -93,7 +96,6 @@ void FileSearch::onSearchButtonClicked() {
 void FileSearch::onFileFound(const QString &filePath) {
     static QVector<QString> filesBatch;
     filesBatch.append(filePath);
-    Logger::instance().log("Found file: " + filePath);
 
     if (++updateCounter % 500 == 0) { // 每找到500个文件更新一次
         QVector<QString> filesBatchCopy = filesBatch; // 创建一个副本
@@ -115,11 +117,20 @@ void FileSearch::onSearchFinished() {
     progressBar->setValue(progressBar->value() + 1); // 更新进度条
     updateProgressLabel();
 
+    QObject *sender = QObject::sender();
+    if (sender) {
+        FileSearchThread *task = qobject_cast<FileSearchThread *>(sender);
+        if (task) {
+            task->deleteLater();
+        }
+    }
+
     if (activeTaskCount == 0) {
         qint64 elapsedTime = timer.elapsed();
         onSearchTime(elapsedTime);
         progressBar->setValue(totalDirectories); // 搜索完成后将进度条设为最大值
         updateProgressLabel();
+        isSearching = false; // 搜索完成后重置搜索状态
     }
 }
 
@@ -132,15 +143,24 @@ void FileSearch::updateProgressLabel() {
 // 搜索耗时的槽函数
 void FileSearch::onSearchTime(qint64 elapsedTime) {
     QMessageBox::information(this, "搜索完成", QString("搜索耗时: %1 毫秒").arg(elapsedTime));
-    Logger::instance().log(QString("搜索耗时: %1 毫秒").arg(elapsedTime));
+    timer.invalidate();
+    Logger::instance().log(QString("计时结束，搜索耗时: %1 毫秒").arg(elapsedTime));
 }
 
 // 中断搜索按钮点击事件
 void FileSearch::onFinishButtonClicked() {
+    if (!isSearching) {
+        Logger::instance().log("没有正在执行的搜索任务。");
+        QMessageBox::information(this, "搜索中断", "没有正在执行的搜索任务。");
+        return; // 如果没有正在执行的搜索任务，直接返回
+    }
+
     threadPool->clear();
     qint64 elapsedTime = timer.elapsed();
     QMessageBox::information(this, "搜索中断", QString("搜索线程被中断，已耗时: %1 毫秒").arg(elapsedTime));
+    timer.invalidate();
     Logger::instance().log(QString("搜索线程被中断，已耗时: %1 毫秒").arg(elapsedTime));
     progressBar->setValue(progressBar->maximum()); // 搜索中断时将进度条设为最大值
     updateProgressLabel();
+    isSearching = false; // 中断搜索后重置搜索状态
 }

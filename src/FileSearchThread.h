@@ -13,6 +13,7 @@ Q_OBJECT
 public:
     FileSearchThread(const QString &keyword, const QString &path, QObject *parent = nullptr);
     void run() override;
+    ~FileSearchThread();
 
 signals:
     void fileFound(const QString &filePath);
