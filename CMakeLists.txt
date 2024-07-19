@@ -23,6 +23,7 @@ add_executable(FileTag
         src/tag_manager.cpp
         src/user_manager.cpp
         src/mainwindow.cpp
+        src/mainwindow.ui
         src/MultiSelectDialog.cpp
         src/Logger.cpp
         src/FileProcessor.cpp
@@ -41,6 +42,7 @@ add_executable(FileTag
         src/CustomModel.cpp
         src/FileSearchThread.cpp
         src/FileSearchThread.h
+        about.h about.cpp about.ui
 )
 
 # 设置包含目录
