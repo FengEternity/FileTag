@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>文件标签管理系统</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QListWidget" name="tagListWidget"/>
+      </item>
+      <item>
+       <widget class="QListView" name="fileView"/>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>文件</string>
+    </property>
+    <addaction name="actionFileSearch"/>
+    <addaction name="actionFileTransfer"/>
+   </widget>
+   <widget class="QMenu" name="menuTag">
+    <property name="title">
+     <string>标签</string>
+    </property>
+    <addaction name="actionAddTag"/>
+    <addaction name="actionSearchTag"/>
+    <addaction name="actionRemoveTag"/>
+    <addaction name="actionUpdateTag"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>帮助</string>
+    </property>
+    <addaction name="actionAbout"/>
+    <addaction name="actionDocumentation"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuTag"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <widget class="QToolBar" name="fileToolBar">
+   <property name="windowTitle">
+    <string>文件工具栏</string>
+   </property>
+   <property name="toolButtonStyle">
+    <enum>Qt::ToolButtonTextUnderIcon</enum>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>LeftToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionFileSearch"/>
+   <addaction name="actionFileTransfer"/>
+  </widget>
+  <widget class="QToolBar" name="tagToolBar">
+   <property name="windowTitle">
+    <string>标签工具栏</string>
+   </property>
+   <property name="toolButtonStyle">
+    <enum>Qt::ToolButtonTextUnderIcon</enum>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>LeftToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionAddTag"/>
+   <addaction name="actionSearchTag"/>
+   <addaction name="actionRemoveTag"/>
+   <addaction name="actionUpdateTag"/>
+  </widget>
+  <action name="actionFileSearch">
+   <property name="text">
+    <string>文件搜索</string>
+   </property>
+  </action>
+  <action name="actionFileTransfer">
+   <property name="text">
+    <string>文件传输</string>
+   </property>
+  </action>
+  <action name="actionAddTag">
+   <property name="text">
+    <string>添加标签</string>
+   </property>
+  </action>
+  <action name="actionSearchTag">
+   <property name="text">
+    <string>搜索标签</string>
+   </property>
+  </action>
+  <action name="actionRemoveTag">
+   <property name="text">
+    <string>删除标签</string>
+   </property>
+  </action>
+  <action name="actionUpdateTag">
+   <property name="text">
+    <string>更新标签</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="text">
+    <string>关于</string>
+   </property>
+  </action>
+  <action name="actionDocumentation">
+   <property name="text">
+    <string>文档</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
