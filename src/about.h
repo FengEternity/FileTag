@@ -2,6 +2,7 @@
 #define ABOUT_H
 
 #include <QWidget>
+#include <QCheckBox>
 
 namespace Ui {
 class About;
@@ -15,8 +16,14 @@ public:
     explicit About(QWidget *parent = nullptr);
     ~About();
 
+
+private slots:
+    void on_closeCheck_clicked();
+
 private:
     Ui::About *ui;
+
+    QCheckBox *closeCheckBox;
 };
 
 #endif // ABOUT_H

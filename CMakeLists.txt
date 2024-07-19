@@ -42,7 +42,9 @@ add_executable(FileTag
         src/CustomModel.cpp
         src/FileSearchThread.cpp
         src/FileSearchThread.h
-        src/about.h src/about.cpp src/about.ui
+        src/about.h
+        src/about.cpp
+        src/about.ui
 )
 
 # 设置包含目录

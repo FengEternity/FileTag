@@ -2,6 +2,7 @@
 #include <QFile>
 #include "mainwindow.h"
 #include "Logger.h"
+#include "about.h"
 
 void applyStyleSheet(QApplication &app) {
     QFile file(":/stylesheet.qss");
@@ -28,5 +29,7 @@ int main(int argc, char *argv[]) {
 
     MainWindow w;
     w.show();
+    About about;
+    about.show();
     return app.exec();
 }
