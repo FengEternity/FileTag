@@ -9,6 +9,7 @@
 #include <QElapsedTimer>
 #include <QVector>
 #include <QProgressBar>
+#include <QLabel>
 
 #include "FileSearchThread.h"
 
@@ -38,12 +39,14 @@ private:
     QListWidget *resultListWidget;
     QPushButton *finishButton;
     QProgressBar *progressBar;
+    QLabel *progressLabel;
     QElapsedTimer timer;
     int updateCounter;
     int activeTaskCount;
     int totalDirectories;
 
     void onSearchTime(qint64 elapsedTime);
+    void updateProgressLabel();
 };
 
 #endif // FILESEARCH_H

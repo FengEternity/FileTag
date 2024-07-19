@@ -27,6 +27,7 @@ FileSearch::FileSearch(QWidget *parent) :
     resultListWidget = ui->resultListWidget;
     finishButton = ui->finishButton;
     progressBar = ui->progressBar;
+    progressLabel = ui->progressLabel;
 
     connect(searchButton, &QPushButton::clicked, this, &FileSearch::onSearchButtonClicked);
     connect(finishButton, &QPushButton::clicked, this, &FileSearch::onFinishButtonClicked);
@@ -74,6 +75,7 @@ void FileSearch::onSearchButtonClicked() {
 
     progressBar->setMaximum(totalDirectories);
     progressBar->setValue(0);
+    updateProgressLabel();
 
     // 第二次遍历进行搜索
     QDirIterator it(searchPath, QDir::Dirs | QDir::NoDotAndDotDot);
@@ -111,12 +113,20 @@ void FileSearch::onFileFound(const QString &filePath) {
 void FileSearch::onSearchFinished() {
     activeTaskCount--;
     progressBar->setValue(progressBar->value() + 1); // 更新进度条
+    updateProgressLabel();
 
     if (activeTaskCount == 0) {
         qint64 elapsedTime = timer.elapsed();
         onSearchTime(elapsedTime);
         progressBar->setValue(totalDirectories); // 搜索完成后将进度条设为最大值
+        updateProgressLabel();
     }
+}
+
+// 更新进度百分比标签
+void FileSearch::updateProgressLabel() {
+    int percentage = static_cast<int>((static_cast<float>(progressBar->value()) / totalDirectories) * 100);
+    progressLabel->setText(QString::number(percentage) + "%");
 }
 
 // 搜索耗时的槽函数
@@ -132,4 +142,5 @@ void FileSearch::onFinishButtonClicked() {
     QMessageBox::information(this, "搜索中断", QString("搜索线程被中断，已耗时: %1 毫秒").arg(elapsedTime));
     Logger::instance().log(QString("搜索线程被中断，已耗时: %1 毫秒").arg(elapsedTime));
     progressBar->setValue(progressBar->maximum()); // 搜索中断时将进度条设为最大值
+    updateProgressLabel();
 }
