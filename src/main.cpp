@@ -12,7 +12,7 @@ void applyStyleSheet(QApplication &app) {
     QFile file(":/stylesheet.qss");
     if (!file.exists()) {
         Logger::instance().log("未找到样式表");
-        qDebug() << "未找到样式表";
+        // qDebug() << "未找到样式表";
         return;
     }
     if (file.open(QFile::ReadOnly | QFile::Text)) {
@@ -24,7 +24,7 @@ void applyStyleSheet(QApplication &app) {
         file.close();
     } else {
         Logger::instance().log("无法加载样式表");
-        qDebug() << ("无法加载样式表");
+        // qDebug() << ("无法加载样式表");
     }
 }
 
@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
     QSettings settings(settingsFile, QSettings::IniFormat);
 
     bool showAbout = settings.value("showAbout", true).toBool();
-    qDebug() << "showAbout:" << showAbout;
+    // qDebug() << "showAbout:" << showAbout;
 
     std::unique_ptr<About> about;
     if (showAbout) {
@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
         about->show();
         about->raise();
         about->activateWindow();
-        qDebug() << "About window shown";
+        // qDebug() << "About window shown";
     }
 
     if (about) {

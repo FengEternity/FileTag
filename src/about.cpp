@@ -11,7 +11,7 @@ About::About(const QString &settingsFile, QWidget *parent)
 
     // 手动连接信号和槽
     connect(closeCheckBox, &QCheckBox::clicked, this, &About::on_closeCheck_clicked);
-    qDebug() << "About window constructed and signal-slot connected";
+    // qDebug() << "About window constructed and signal-slot connected";
 }
 
 About::~About() {
@@ -21,5 +21,5 @@ About::~About() {
 
 void About::on_closeCheck_clicked() {
     settings.setValue("showAbout", !closeCheckBox->isChecked());
-    qDebug() << "Checkbox clicked, setting updated";
+    // qDebug() << "Checkbox clicked, setting updated";
 }
