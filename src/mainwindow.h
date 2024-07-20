@@ -2,18 +2,12 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QLabel>
-#include <QListWidget>
-#include <QListView>
 #include <QFileSystemModel>
-#include <QToolBar>
-#include <QMenuBar>
-#include <QFile>
-#include <QTextStream>
 #include "file_tag_system.h"
-#include "Logger.h"
+
+QT_BEGIN_NAMESPACE
+namespace Ui { class MainWindow; }
+QT_END_NAMESPACE
 
 class MainWindow : public QMainWindow {
 Q_OBJECT
@@ -32,42 +26,22 @@ private slots:
     void onUpdateTagClicked();
     void onFileActionClicked();
     void onTagSelected();
-    void onFileClicked(const QModelIndex &index);  // 文件点击槽函数
+    void onFileClicked(const QModelIndex &index);
     void showAboutDialog();
     void showDocumentation();
-    void initializeView();  // 初始化视图
+    void initializeView();
     void onFileSearchClicked();
     void onFileTransferClicked();
 
-
 private:
-    QLabel *infoLabel;
+    Ui::MainWindow *ui;
 
-    QWidget *centralWidget;
-    QHBoxLayout *mainLayout;
-    QVBoxLayout *sideBarLayout;
-    QVBoxLayout *contentLayout;
+    QFileSystemModel *fileModel;
+    FileTagSystem fileTagSystem;
 
-    QToolBar *toolBar;
-
-    QMenuBar *menuBar;
-    QMenu *fileMenu;
-    QMenu *editMenu;
-    QMenu *tagMenu;
-    QMenu *helpMenu;
-
-    QListWidget *tagListWidget;
-    QListView *fileView;  // 使用 QListView
-    QFileSystemModel *fileModel;  // 使用 QFileSystemModel
-
-    FileTagSystem fileTagSystem;  // 添加 FileTagSystem 成员
-
-    QAction *fileSearchAction;
-    QAction *fileTransferAction;
-
-    void populateTags();  // 填充标签列表
-    void displayFiles(const QStringList& filepaths);  // 显示文件列表
-    void showFilePreview(const QString &filePath);  // 显示文件预览
+    void populateTags();
+    void displayFiles(const QStringList& filepaths);
+    void showFilePreview(const QString &filePath);
 
 protected:
     void closeEvent(QCloseEvent *event) override;

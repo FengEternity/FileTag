@@ -1,5 +1,11 @@
 <RCC>
     <qresource prefix="/">
         <file>stylesheet.qss</file>
+        <file>tagadd.png</file>
+        <file>fileload.png</file>
+        <file>filesearch.png</file>
+        <file>tagmove.png</file>
+        <file>tagsearch.png</file>
+        <file>tagupdate.png</file>
     </qresource>
 </RCC>

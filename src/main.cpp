@@ -17,7 +17,7 @@ void applyStyleSheet(QApplication &app) {
     }
     if (file.open(QFile::ReadOnly | QFile::Text)) {
         Logger::instance().log("加载样式表");
-        qDebug() << "加载样式表";
+        // qDebug() << "加载样式表";
         QTextStream stream(&file);
         QString styleSheet = stream.readAll();
         app.setStyleSheet(styleSheet);
