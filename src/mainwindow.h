@@ -22,6 +22,9 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+signals:
+    void mainWindowClosed();
+
 private slots:
     void onAddTagClicked();
     void onSearchTagClicked();
@@ -35,6 +38,7 @@ private slots:
     void initializeView();  // 初始化视图
     void onFileSearchClicked();
     void onFileTransferClicked();
+
 
 private:
     QLabel *infoLabel;
@@ -64,6 +68,9 @@ private:
     void populateTags();  // 填充标签列表
     void displayFiles(const QStringList& filepaths);  // 显示文件列表
     void showFilePreview(const QString &filePath);  // 显示文件预览
+
+protected:
+    void closeEvent(QCloseEvent *event) override;
 };
 
 #endif // MAINWINDOW_H

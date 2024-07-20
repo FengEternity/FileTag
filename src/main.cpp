@@ -24,7 +24,7 @@ void applyStyleSheet(QApplication &app) {
         file.close();
     } else {
         Logger::instance().log("无法加载样式表");
-        qDebug() << "无法加载样式表";
+        qDebug() << ("无法加载样式表");
     }
 }
 
@@ -44,18 +44,20 @@ int main(int argc, char *argv[]) {
     std::unique_ptr<About> about;
     if (showAbout) {
         about = std::make_unique<About>(settingsFile);
-        about->resize(400, 300); // 设置窗口大小
-
-        // 使用 QScreen 类移动窗口到屏幕中央
+        about->resize(400, 300);
         QRect screenGeometry = QGuiApplication::primaryScreen()->geometry();
         int x = (screenGeometry.width() - about->width()) / 2;
         int y = (screenGeometry.height() - about->height()) / 2;
         about->move(x, y);
-
         about->show();
         about->raise();
         about->activateWindow();
         qDebug() << "About window shown";
     }
+
+    if (about) {
+        QObject::connect(&w, &MainWindow::mainWindowClosed, about.get(), &QWidget::close);
+    }
+
     return app.exec();
 }

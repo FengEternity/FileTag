@@ -19,7 +19,7 @@
 #include <QFileDialog>
 #include <QToolButton>
 #include <QMenu>
-
+#include <QCloseEvent>
 
 MainWindow::MainWindow(QWidget *parent)
         : QMainWindow(parent),
@@ -135,29 +135,27 @@ MainWindow::MainWindow(QWidget *parent)
     connect(documentationAction, &QAction::triggered, this, &MainWindow::showDocumentation);
 }
 
+void MainWindow::closeEvent(QCloseEvent *event) {
+    emit mainWindowClosed();
+    QMainWindow::closeEvent(event);
+}
 
 // 文件动作的槽函数实现
 void MainWindow::onFileActionClicked() {
-    // 实现文件动作的处理逻辑，例如打开文件对话框
     QString filePath = QFileDialog::getOpenFileName(this, "选择文件", "", "所有文件 (*)");
     if (!filePath.isEmpty()) {
-        // 处理选定的文件路径
         QMessageBox::information(this, "文件已选择", "您选择的文件是: " + filePath);
     }
 }
 
 void MainWindow::onFileSearchClicked() {
-    // 取回现有的中央窗口部件
     QWidget *currentCentralWidget = takeCentralWidget();
     if (currentCentralWidget) {
         delete currentCentralWidget;
     }
-
-    // 创建新的 FileSearch 并设置为中央窗口部件
     FileSearch *fileSearch = new FileSearch(this);
     setCentralWidget(fileSearch);
 }
-
 
 void MainWindow::onFileTransferClicked() {
     // 文件传输功能的空实现
@@ -185,10 +183,8 @@ void MainWindow::onAddTagClicked() {
     }
 }
 
-
 void MainWindow::onSearchTagClicked() {
     QString tag = QInputDialog::getText(this, "搜索标签", "请输入标签:");
-
     if (!tag.isEmpty()) {
         std::vector<std::string> files = fileTagSystem.searchFilesByTag(tag.toStdString());
         QStringList fileList;
@@ -199,10 +195,8 @@ void MainWindow::onSearchTagClicked() {
     }
 }
 
-
 void MainWindow::onRemoveTagClicked() {
     QString tag = QInputDialog::getText(this, "删除标签", "请输入标签:");
-
     if (!tag.isEmpty()) {
         std::vector<std::string> files = fileTagSystem.searchFilesByTag(tag.toStdString());
         if (files.empty()) {
@@ -210,14 +204,10 @@ void MainWindow::onRemoveTagClicked() {
             Logger::instance().log("没有文件包含此标签。");
             return;
         }
-
         QStringList fileList;
         for (const auto &file : files) {
             fileList.append(QString::fromStdString(file));
         }
-
-        // fileList.append("删除所有文件");  // 添加 "删除所有文件" 选项
-
         MultiSelectDialog dialog(fileList, this);
         if (dialog.exec() == QDialog::Accepted) {
             QStringList selectedFiles = dialog.selectedItems();
@@ -238,7 +228,6 @@ void MainWindow::onRemoveTagClicked() {
         }
     }
 }
-
 
 void MainWindow::onUpdateTagClicked() {
     QString filePath = QInputDialog::getText(this, "更新标签", "请输入文件路径:");
@@ -278,25 +267,20 @@ void MainWindow::displayFiles(const QStringList &filepaths) {
     Logger::instance().log("displayFiles 调用参数：" + filepaths.join(", "));
 
     if (filepaths.isEmpty()) {
-        // 设置一个空的 QStringListModel 以隐藏所有文件和文件夹
         QStringListModel *emptyModel = new QStringListModel(this);
         fileView->setModel(emptyModel);
         fileView->setRootIndex(QModelIndex());
         Logger::instance().log("视图已清除");
         return;
     }
-
-    // 获取第一个文件的目录并设置为根目录
     QFileInfo firstFile(filepaths.first());
     QString directory = firstFile.absolutePath();
 
-    // 设置 QFileSystemModel
     fileView->setModel(fileModel);
     fileModel->setRootPath(directory);
     fileView->setRootIndex(fileModel->index(directory));
     Logger::instance().log("设置根目录为：" + directory);
 
-    // 过滤文件
     QStringList nameFilters;
     for (const QString &filePath : filepaths) {
         QFileInfo fileInfo(filePath);
@@ -305,38 +289,35 @@ void MainWindow::displayFiles(const QStringList &filepaths) {
     }
     fileModel->setNameFilters(nameFilters);
     fileModel->setNameFilterDisables(false);
-    fileView->setRootIndex(fileModel->index(directory));  // 设置视图的根目录
+    fileView->setRootIndex(fileModel->index(directory));
 
-    // 设置文件名长度限制
     for (int i = 0; i < fileModel->rowCount(fileView->rootIndex()); ++i) {
         QModelIndex index = fileModel->index(i, 0, fileView->rootIndex());
         QString fileName = fileModel->fileName(index);
-        if (fileName.length() > 20) {  // 限制文件名长度
+        if (fileName.length() > 20) {
             QString shortName = fileName.left(17) + "...";
             fileModel->setData(index, shortName, Qt::DisplayRole);
             Logger::instance().log("截断文件名：" + fileName + "为：" + shortName);
         }
     }
-    fileView->update();  // 手动刷新视图
+    fileView->update();
 }
 
 void MainWindow::onFileClicked(const QModelIndex &index) {
     QString filePath = fileModel->filePath(index);
-    showFilePreview(filePath);  // 显示文件预览
+    showFilePreview(filePath);
 }
 
 void MainWindow::showFilePreview(const QString &filePath) {
     QFileInfo fileInfo(filePath);
     if (fileInfo.isFile()) {
         if (fileInfo.suffix().toLower() == "txt" || fileInfo.suffix().toLower() == "md") {
-            // 显示文本文件内容
             QFile file(filePath);
             if (file.open(QFile::ReadOnly | QFile::Text)) {
                 QTextStream in(&file);
                 QString content = in.readAll();
                 file.close();
 
-                // 使用QTextEdit显示文件内容
                 QTextEdit *textEdit = new QTextEdit;
                 textEdit->setReadOnly(true);
                 textEdit->setPlainText(content);
@@ -349,7 +330,6 @@ void MainWindow::showFilePreview(const QString &filePath) {
                 dialog->exec();
             }
         } else if (fileInfo.suffix().toLower() == "png" || fileInfo.suffix().toLower() == "jpg" || fileInfo.suffix().toLower() == "jpeg") {
-            // 显示图片文件缩略图
             QLabel *imageLabel = new QLabel;
             QPixmap pixmap(filePath);
             imageLabel->setPixmap(pixmap.scaled(256, 256, Qt::KeepAspectRatio));
