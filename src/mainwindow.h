@@ -33,6 +33,8 @@ private slots:
     void onFileSearchClicked();
     void onFileTransferClicked();
 
+    void on_actionHome_triggered();
+
 private:
     Ui::MainWindow *ui;
 

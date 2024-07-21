@@ -45,6 +45,7 @@ add_executable(FileTag
         src/about.h
         src/about.cpp
         src/about.ui
+
 )
 
 # 设置包含目录

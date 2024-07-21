@@ -285,3 +285,9 @@ void MainWindow::showDocumentation() {
     QMessageBox::information(this, "帮助文档", "使用过程中如遇到问题欢迎联系我。\n"
                                                "邮件：2605958732@qq.com");
 }
+
+void MainWindow::on_actionHome_triggered()
+{
+
+}
+

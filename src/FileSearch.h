@@ -48,6 +48,7 @@ private:
     void onSearchTime(qint64 elapsedTime);
     void updateProgressLabel();
     bool isSearching;
+    bool firstSearch = true;
 };
 
 #endif // FILESEARCH_H

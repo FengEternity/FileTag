@@ -96,8 +96,9 @@ void FileSearch::onSearchButtonClicked() {
 void FileSearch::onFileFound(const QString &filePath) {
     static QVector<QString> filesBatch;
     filesBatch.append(filePath);
+    Logger::instance().log("文件找到: " + filePath);
 
-    if (++updateCounter % 500 == 0) { // 每找到500个文件更新一次
+    if(firstSearch) {
         QVector<QString> filesBatchCopy = filesBatch; // 创建一个副本
         filesBatch.clear(); // 清空原有的批量文件列表
 
@@ -108,7 +109,32 @@ void FileSearch::onFileFound(const QString &filePath) {
             resultListWidget->viewport()->update();
         };
         QMetaObject::invokeMethod(this, updateUI, Qt::QueuedConnection);
-    }
+    } else {
+        if (++updateCounter % 500 == 0) { // 每找到500个文件更新一次
+            QVector<QString> filesBatchCopy = filesBatch; // 创建一个副本
+            filesBatch.clear(); // 清空原有的批量文件列表
+
+            auto updateUI = [this, filesBatchCopy]() {
+                resultListWidget->addItems(filesBatchCopy.toList());
+                resultListWidget->reset();
+                resultListWidget->update();
+                resultListWidget->viewport()->update();
+            };
+            QMetaObject::invokeMethod(this, updateUI, Qt::QueuedConnection);
+        }
+   }
+//    if (++updateCounter % 500 == 0) { // 每找到500个文件更新一次
+//        QVector<QString> filesBatchCopy = filesBatch; // 创建一个副本
+//        filesBatch.clear(); // 清空原有的批量文件列表
+//
+//        auto updateUI = [this, filesBatchCopy]() {
+//            resultListWidget->addItems(filesBatchCopy.toList());
+//            resultListWidget->reset();
+//            resultListWidget->update();
+//            resultListWidget->viewport()->update();
+//        };
+//        QMetaObject::invokeMethod(this, updateUI, Qt::QueuedConnection);
+//    }
 }
 
 // 搜索完成时的槽函数

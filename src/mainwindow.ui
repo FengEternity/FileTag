@@ -52,7 +52,7 @@
      <x>0</x>
      <y>0</y>
      <width>600</width>
-     <height>24</height>
+     <height>37</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -86,12 +86,16 @@
    <property name="windowTitle">
     <string>toolBar</string>
    </property>
+   <property name="movable">
+    <bool>false</bool>
+   </property>
    <attribute name="toolBarArea">
     <enum>LeftToolBarArea</enum>
    </attribute>
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="actionHome"/>
    <addaction name="actionFileSearch"/>
    <addaction name="actionFileTransfer"/>
    <addaction name="actionAddTag"/>
@@ -123,10 +127,10 @@
      <normaloff>:/tagadd.png</normaloff>:/tagadd.png</iconset>
    </property>
    <property name="text">
-    <string>添加</string>
+    <string>标签添加</string>
    </property>
    <property name="toolTip">
-    <string>添加</string>
+    <string>标签添加</string>
    </property>
   </action>
   <action name="actionSearchTag">
@@ -135,7 +139,7 @@
      <normaloff>:/tagsearch.png</normaloff>:/tagsearch.png</iconset>
    </property>
    <property name="text">
-    <string>搜索</string>
+    <string>标签搜索</string>
    </property>
   </action>
   <action name="actionRemoveTag">
@@ -144,7 +148,7 @@
      <normaloff>:/tagmove.png</normaloff>:/tagmove.png</iconset>
    </property>
    <property name="text">
-    <string>删除</string>
+    <string>标签删除</string>
    </property>
   </action>
   <action name="actionUpdateTag">
@@ -153,7 +157,7 @@
      <normaloff>:/tagupdate.png</normaloff>:/tagupdate.png</iconset>
    </property>
    <property name="text">
-    <string>更新</string>
+    <string>标签更新</string>
    </property>
   </action>
   <action name="actionAbout">
@@ -166,9 +170,38 @@
     <string>文档</string>
    </property>
   </action>
+  <action name="actionHome">
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/home.png</normaloff>:/home.png</iconset>
+   </property>
+   <property name="text">
+    <string>主页</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
  </widget>
  <resources>
   <include location="../resources/resources.qrc"/>
  </resources>
- <connections/>
+ <connections>
+  <connection>
+   <sender>actionHome</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>update()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>299</x>
+     <y>199</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
