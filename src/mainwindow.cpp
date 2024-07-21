@@ -17,15 +17,20 @@ MainWindow::MainWindow(QWidget *parent)
         : QMainWindow(parent),
           ui(new Ui::MainWindow),
           fileModel(new QFileSystemModel(this)),
-          fileTagSystem("tags.csv", "users.csv") {
+          fileTagSystem("tags.csv", "users.csv"),
+          homeWidget(nullptr) {
 
-    ui->setupUi(this);
+    ui->setupUi(this); // 确保 setupUi 被正确调用
+
+    // 初始化 homeWidget
+    homeWidget = new QWidget(this);
+    QHBoxLayout *layout = new QHBoxLayout(homeWidget);
+    layout->addWidget(ui->splitter);  // 将 splitter 添加到 homeWidget
+
+    setCentralWidget(homeWidget);  // 设置 homeWidget 为中央控件
 
     setWindowTitle("FileTAG");
     resize(600, 400);
-
-    // 设置工具栏位置
-    // addToolBar(Qt::LeftToolBarArea, ui->toolBar);
 
     // 设置菜单和工具栏动作
     connect(ui->actionFileSearch, &QAction::triggered, this, &MainWindow::onFileSearchClicked);
@@ -83,7 +88,7 @@ void MainWindow::onFileActionClicked() {
 
 void MainWindow::onFileSearchClicked() {
     QWidget *currentCentralWidget = takeCentralWidget();
-    if (currentCentralWidget) {
+    if (currentCentralWidget && currentCentralWidget != homeWidget) {
         delete currentCentralWidget;
     }
     FileSearch *fileSearch = new FileSearch(this);
@@ -286,8 +291,21 @@ void MainWindow::showDocumentation() {
                                                "邮件：2605958732@qq.com");
 }
 
-void MainWindow::on_actionHome_triggered()
-{
+void MainWindow::on_actionHome_triggered() {
+    // 检查 homeWidget 指针是否有效
+    if (!homeWidget) {
+        qDebug() << "homeWidget 指针为空！";
+        return;
+    }
 
+    setCentralWidget(homeWidget);
+
+    // 清空文件视图
+    initializeView();
+
+    // 重新连接信号和槽
+    connect(ui->tagListWidget, &QListWidget::itemClicked, this, &MainWindow::onTagSelected);
+    connect(ui->fileView, &QListView::clicked, this, &MainWindow::onFileClicked);
+
+    populateTags(); // 填充标签列表
 }
-

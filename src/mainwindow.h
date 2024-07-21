@@ -32,13 +32,13 @@ private slots:
     void initializeView();
     void onFileSearchClicked();
     void onFileTransferClicked();
-
     void on_actionHome_triggered();
 
 private:
     Ui::MainWindow *ui;
 
     QFileSystemModel *fileModel;
+    QWidget *homeWidget;
     FileTagSystem fileTagSystem;
 
     void populateTags();
