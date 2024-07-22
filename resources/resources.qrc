@@ -8,5 +8,6 @@
         <file>tagsearch.png</file>
         <file>tagupdate.png</file>
         <file>home.png</file>
+        <file>logo.png</file>
     </qresource>
 </RCC>

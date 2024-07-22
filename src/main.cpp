@@ -32,6 +32,8 @@ int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
     applyStyleSheet(app);
 
+    app.setWindowIcon(QIcon(":/logo.png")); // 确保图标路径正确
+
     MainWindow w;
     w.show();
 
