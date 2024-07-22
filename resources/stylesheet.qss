@@ -31,14 +31,24 @@ QLabel {
 }
 
 QListWidget {
-    background-color: #ffffff;
-    border: 1px solid #dddddd;
+    background-color: transparent;
+    border: none;
     padding: 5px;
     font-size: 14px;
 }
 
 QListWidget::item {
     padding: 3px; /* 设置间距为10像素 */
+}
+
+QListWidget::item:selected {
+    background-color: #adbcc6;
+    border-radius: 4px;
+}
+
+QListWidget::item:hover {
+    background-color: #dbe1e6;
+    border-radius: 4px;
 }
 
 QTextEdit {
@@ -50,4 +60,16 @@ QGroupBox {
     margin-top: 10px; /* 顶部外边距 */
     padding: 0px; /* 内边距 */
     background: transparent; /* 背景透明 */
+}
+
+QListView {
+    background-color: transparent;
+    border: none;
+    padding: 5px;
+    font-size: 14px;
+}
+
+QSplitter::handle {
+    background-color: #eeeeee;
+    border: 1px #d0d0d0;
 }
