@@ -5,3 +5,4 @@ cmake-build-debug/
 .idea/
 Filetest/EmFile/
 src/CMakeLists.txt.user
+pkg/
