@@ -53,7 +53,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QListWidget" name="resultListWidget"/>
+    <widget class="QTableView" name="resultTableView"/>
    </item>
    <item>
     <layout class="QHBoxLayout" name="progressLayout">

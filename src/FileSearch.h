@@ -3,13 +3,14 @@
 
 #include <QWidget>
 #include <QLineEdit>
-#include <QListWidget>
+#include <QTableView>
 #include <QPushButton>
 #include <QThreadPool>
 #include <QElapsedTimer>
-#include <QVector>
+#include <QStandardItemModel>
 #include <QProgressBar>
 #include <QLabel>
+#include <QFileInfo>
 
 #include "FileSearchThread.h"
 
@@ -36,7 +37,8 @@ private:
     QPushButton *searchButton;
     QLineEdit *searchLineEdit;
     QLineEdit *pathLineEdit;
-    QListWidget *resultListWidget;
+    QTableView *resultTableView;
+    QStandardItemModel *tableModel;
     QPushButton *finishButton;
     QProgressBar *progressBar;
     QLabel *progressLabel;

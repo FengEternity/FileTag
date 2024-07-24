@@ -24,7 +24,11 @@ FileSearch::FileSearch(QWidget *parent) :
     searchButton = ui->searchButton;
     searchLineEdit = ui->searchLineEdit;
     pathLineEdit = ui->pathLineEdit;
-    resultListWidget = ui->resultListWidget;
+    resultTableView = ui->resultTableView;
+    tableModel = new QStandardItemModel(this);
+    tableModel->setHorizontalHeaderLabels({"文件名", "文件路径", "文件类型", "创建时间", "修改时间"});
+    resultTableView->setModel(tableModel);
+    resultTableView->horizontalHeader()->setStretchLastSection(true);
     finishButton = ui->finishButton;
     progressBar = ui->progressBar;
     progressLabel = ui->progressLabel;
@@ -32,11 +36,11 @@ FileSearch::FileSearch(QWidget *parent) :
     connect(searchButton, &QPushButton::clicked, this, &FileSearch::onSearchButtonClicked);
     connect(finishButton, &QPushButton::clicked, this, &FileSearch::onFinishButtonClicked);
 
-    Logger::instance().log("列表视图模型设置完成。");
+    Logger::instance().log("表格视图模型设置完成。");
 
     if (!layout()) {
         auto *layout = new QVBoxLayout(this);
-        layout->addWidget(resultListWidget);
+        layout->addWidget(resultTableView);
         setLayout(layout);
     }
 
@@ -59,7 +63,7 @@ void FileSearch::onSearchButtonClicked() {
         searchPath = QDir::rootPath();
     }
 
-    resultListWidget->clear();
+    tableModel->removeRows(0, tableModel->rowCount());
     Logger::instance().log("Search started for keyword: " + searchKeyword + " in path: " + searchPath);
 
     timer.start();
@@ -103,10 +107,16 @@ void FileSearch::onFileFound(const QString &filePath) {
         filesBatch.clear(); // 清空原有的批量文件列表
 
         auto updateUI = [this, filesBatchCopy]() {
-            resultListWidget->addItems(filesBatchCopy.toList());
-            resultListWidget->reset();
-            resultListWidget->update();
-            resultListWidget->viewport()->update();
+            for (const QString &filePath : filesBatchCopy) {
+                QFileInfo fileInfo(filePath);
+                QList<QStandardItem *> items;
+                items.append(new QStandardItem(fileInfo.fileName()));
+                items.append(new QStandardItem(fileInfo.absoluteFilePath()));
+                items.append(new QStandardItem(fileInfo.suffix()));
+                items.append(new QStandardItem(fileInfo.birthTime().toString("yyyy-MM-dd HH:mm:ss")));
+                items.append(new QStandardItem(fileInfo.lastModified().toString("yyyy-MM-dd HH:mm:ss")));
+                tableModel->appendRow(items);
+            }
         };
         QMetaObject::invokeMethod(this, updateUI, Qt::QueuedConnection);
     } else {
@@ -115,26 +125,20 @@ void FileSearch::onFileFound(const QString &filePath) {
             filesBatch.clear(); // 清空原有的批量文件列表
 
             auto updateUI = [this, filesBatchCopy]() {
-                resultListWidget->addItems(filesBatchCopy.toList());
-                resultListWidget->reset();
-                resultListWidget->update();
-                resultListWidget->viewport()->update();
+                for (const QString &filePath : filesBatchCopy) {
+                    QFileInfo fileInfo(filePath);
+                    QList<QStandardItem *> items;
+                    items.append(new QStandardItem(fileInfo.fileName()));
+                    items.append(new QStandardItem(fileInfo.absoluteFilePath()));
+                    items.append(new QStandardItem(fileInfo.suffix()));
+                    items.append(new QStandardItem(fileInfo.birthTime().toString("yyyy-MM-dd HH:mm:ss")));
+                    items.append(new QStandardItem(fileInfo.lastModified().toString("yyyy-MM-dd HH:mm:ss")));
+                    tableModel->appendRow(items);
+                }
             };
             QMetaObject::invokeMethod(this, updateUI, Qt::QueuedConnection);
         }
-   }
-//    if (++updateCounter % 500 == 0) { // 每找到500个文件更新一次
-//        QVector<QString> filesBatchCopy = filesBatch; // 创建一个副本
-//        filesBatch.clear(); // 清空原有的批量文件列表
-//
-//        auto updateUI = [this, filesBatchCopy]() {
-//            resultListWidget->addItems(filesBatchCopy.toList());
-//            resultListWidget->reset();
-//            resultListWidget->update();
-//            resultListWidget->viewport()->update();
-//        };
-//        QMetaObject::invokeMethod(this, updateUI, Qt::QueuedConnection);
-//    }
+    }
 }
 
 // 搜索完成时的槽函数
