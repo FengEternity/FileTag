@@ -24,22 +24,33 @@ FileSearch::FileSearch(QWidget *parent) :
     searchButton = ui->searchButton;
     searchLineEdit = ui->searchLineEdit;
     pathLineEdit = ui->pathLineEdit;
+    filterLineEdit = ui->filterLineEdit; // 绑定新的过滤输入框
     resultTableView = ui->resultTableView;
     tableModel = new QStandardItemModel(this);
     tableModel->setHorizontalHeaderLabels({"文件名", "文件路径", "文件类型", "创建时间", "修改时间"});
-    resultTableView->setModel(tableModel);
+
+    proxyModel = new QSortFilterProxyModel(this);
+    proxyModel->setSourceModel(tableModel);
+    proxyModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
+    proxyModel->setFilterKeyColumn(-1); // Filter on all columns
+
+    resultTableView->setModel(proxyModel);
     resultTableView->horizontalHeader()->setStretchLastSection(true);
+    resultTableView->setSortingEnabled(true);
+
     finishButton = ui->finishButton;
     progressBar = ui->progressBar;
     progressLabel = ui->progressLabel;
 
     connect(searchButton, &QPushButton::clicked, this, &FileSearch::onSearchButtonClicked);
     connect(finishButton, &QPushButton::clicked, this, &FileSearch::onFinishButtonClicked);
+    connect(filterLineEdit, &QLineEdit::textChanged, this, &FileSearch::onSearchFilterChanged);
 
     Logger::instance().log("表格视图模型设置完成。");
 
     if (!layout()) {
         auto *layout = new QVBoxLayout(this);
+        layout->addWidget(filterLineEdit); // 添加新的过滤输入框到布局
         layout->addWidget(resultTableView);
         setLayout(layout);
     }
@@ -193,4 +204,9 @@ void FileSearch::onFinishButtonClicked() {
     progressBar->setValue(progressBar->maximum()); // 搜索中断时将进度条设为最大值
     updateProgressLabel();
     isSearching = false; // 中断搜索后重置搜索状态
+}
+
+// 搜索过滤变化时的槽函数
+void FileSearch::onSearchFilterChanged(const QString &text) {
+    proxyModel->setFilterWildcard(text);
 }

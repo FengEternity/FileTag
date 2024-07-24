@@ -10,7 +10,7 @@
 #include <QStandardItemModel>
 #include <QProgressBar>
 #include <QLabel>
-#include <QFileInfo>
+#include <QSortFilterProxyModel>
 
 #include "FileSearchThread.h"
 
@@ -30,6 +30,7 @@ private slots:
     void onFileFound(const QString &filePath);
     void onSearchFinished();
     void onFinishButtonClicked();
+    void onSearchFilterChanged(const QString &text);
 
 private:
     Ui::FileSearch *ui;
@@ -37,8 +38,10 @@ private:
     QPushButton *searchButton;
     QLineEdit *searchLineEdit;
     QLineEdit *pathLineEdit;
+    QLineEdit *filterLineEdit;
     QTableView *resultTableView;
     QStandardItemModel *tableModel;
+    QSortFilterProxyModel *proxyModel;
     QPushButton *finishButton;
     QProgressBar *progressBar;
     QLabel *progressLabel;

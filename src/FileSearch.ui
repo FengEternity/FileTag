@@ -53,6 +53,13 @@
     </widget>
    </item>
    <item>
+    <widget class="QLineEdit" name="filterLineEdit">
+     <property name="placeholderText">
+      <string>搜索过滤...</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QTableView" name="resultTableView"/>
    </item>
    <item>
