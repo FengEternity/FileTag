@@ -52,8 +52,12 @@ private:
 
     void onSearchTime(qint64 elapsedTime);
     void updateProgressLabel();
+    void finishSearch();
+
+
     bool isSearching;
     bool firstSearch = true;
+    static QVector<QString> filesBatch; // 声明静态变量
 };
 
 #endif // FILESEARCH_H
