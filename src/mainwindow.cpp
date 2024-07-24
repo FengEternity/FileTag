@@ -74,11 +74,13 @@ MainWindow::~MainWindow() {
     delete ui;
 }
 
+// 关闭事件处理
 void MainWindow::closeEvent(QCloseEvent *event) {
     emit mainWindowClosed();
     QMainWindow::closeEvent(event);
 }
 
+// 文件操作按钮点击事件处理
 void MainWindow::onFileActionClicked() {
     QString filePath = QFileDialog::getOpenFileName(this, "选择文件", "", "所有文件 (*)");
     if (!filePath.isEmpty()) {
@@ -86,6 +88,7 @@ void MainWindow::onFileActionClicked() {
     }
 }
 
+// 文件搜索按钮点击事件处理
 void MainWindow::onFileSearchClicked() {
     QWidget *currentCentralWidget = takeCentralWidget();
     if (currentCentralWidget && currentCentralWidget != homeWidget) {
@@ -95,15 +98,18 @@ void MainWindow::onFileSearchClicked() {
     setCentralWidget(fileSearch);
 }
 
+// 文件传输按钮点击事件处理
 void MainWindow::onFileTransferClicked() {
     // 文件传输功能的空实现
 }
 
+// 初始化视图
 void MainWindow::initializeView() {
     QStringListModel *emptyModel = new QStringListModel(this);
     ui->fileView->setModel(emptyModel);
 }
 
+// 添加标签按钮点击事件处理
 void MainWindow::onAddTagClicked() {
     QString filePath = QFileDialog::getOpenFileName(this, "选择文件", "", "所有文件 (*)");
     if (filePath.isEmpty()) {
@@ -119,6 +125,7 @@ void MainWindow::onAddTagClicked() {
     }
 }
 
+// 搜索标签按钮点击事件处理
 void MainWindow::onSearchTagClicked() {
     QString tag = QInputDialog::getText(this, "搜索标签", "请输入标签:");
     if (!tag.isEmpty()) {
@@ -131,6 +138,7 @@ void MainWindow::onSearchTagClicked() {
     }
 }
 
+// 删除标签按钮点击事件处理
 void MainWindow::onRemoveTagClicked() {
     QString tag = QInputDialog::getText(this, "删除标签", "请输入标签:");
     if (!tag.isEmpty()) {
@@ -165,6 +173,7 @@ void MainWindow::onRemoveTagClicked() {
     }
 }
 
+// 更新标签按钮点击事件处理
 void MainWindow::onUpdateTagClicked() {
     QString filePath = QInputDialog::getText(this, "更新标签", "请输入文件路径:");
     QString oldTag = QInputDialog::getText(this, "更新标签", "请输入旧标签:");
@@ -178,6 +187,7 @@ void MainWindow::onUpdateTagClicked() {
     }
 }
 
+// 标签列表项被选中事件处理
 void MainWindow::onTagSelected() {
     QListWidgetItem *item = ui->tagListWidget->currentItem();
     if (item) {
@@ -191,6 +201,7 @@ void MainWindow::onTagSelected() {
     }
 }
 
+// 填充标签列表
 void MainWindow::populateTags() {
     ui->tagListWidget->clear();
     std::vector<std::string> tags = fileTagSystem.listAllTags();
@@ -199,6 +210,7 @@ void MainWindow::populateTags() {
     }
 }
 
+// 显示文件列表
 void MainWindow::displayFiles(const QStringList &filepaths) {
     Logger::instance().log("displayFiles 调用参数：" + filepaths.join(", "));
 
@@ -239,11 +251,13 @@ void MainWindow::displayFiles(const QStringList &filepaths) {
     ui->fileView->update();
 }
 
+// 文件视图中的文件被点击事件处理
 void MainWindow::onFileClicked(const QModelIndex &index) {
     QString filePath = fileModel->filePath(index);
     showFilePreview(filePath);
 }
 
+// 显示文件预览
 void MainWindow::showFilePreview(const QString &filePath) {
     QFileInfo fileInfo(filePath);
     if (fileInfo.isFile()) {
@@ -280,17 +294,20 @@ void MainWindow::showFilePreview(const QString &filePath) {
     }
 }
 
+// 显示关于对话框
 void MainWindow::showAboutDialog() {
     QMessageBox::about(this, "关于", "FileTag 是一个简单的文件标签工具。\n"
                                      "版本：1.0\n"
                                      "作者：Montee");
 }
 
+// 显示帮助文档
 void MainWindow::showDocumentation() {
     QMessageBox::information(this, "帮助文档", "使用过程中如遇到问题欢迎联系我。\n"
                                                "邮件：2605958732@qq.com");
 }
 
+// 回到主窗口
 void MainWindow::on_actionHome_triggered() {
     // 检查 homeWidget 指针是否有效
     if (!homeWidget) {
