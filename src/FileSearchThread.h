@@ -13,6 +13,7 @@ Q_OBJECT
 public:
     FileSearchThread(const QString &keyword, const QString &path, QObject *parent = nullptr);
     void run() override;
+    void stop();
     ~FileSearchThread();
 
 signals:
@@ -23,7 +24,8 @@ signals:
 private:
     QString searchKeyword;
     QString searchPath;
-    QElapsedTimer timer; // 新增
+    QElapsedTimer timer;
+    bool stopped;
 };
 
 #endif // FILESEARCHTHREAD_H

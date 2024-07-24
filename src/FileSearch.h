@@ -11,6 +11,7 @@
 #include <QProgressBar>
 #include <QLabel>
 #include <QSortFilterProxyModel>
+#include <QVector>
 
 #include "FileSearchThread.h"
 
@@ -53,11 +54,14 @@ private:
     void onSearchTime(qint64 elapsedTime);
     void updateProgressLabel();
     void finishSearch();
-
+    void stopAllTasks();
 
     bool isSearching;
     bool firstSearch = true;
+    bool isStopping = false;
     static QVector<QString> filesBatch; // 声明静态变量
+
+    QVector<FileSearchThread *> activeTasks; // 新增保存活动任务的成员变量
 };
 
 #endif // FILESEARCH_H

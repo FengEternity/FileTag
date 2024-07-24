@@ -61,6 +61,7 @@ FileSearch::FileSearch(QWidget *parent) :
 }
 
 FileSearch::~FileSearch() {
+    stopAllTasks(); // 确保析构时停止所有任务
     threadPool->waitForDone();
     delete ui;
 }
@@ -99,6 +100,7 @@ void FileSearch::onSearchButtonClicked() {
         auto *task = new FileSearchThread(searchKeyword, dirPath);
         connect(task, &FileSearchThread::fileFound, this, &FileSearch::onFileFound);
         connect(task, &FileSearchThread::searchFinished, this, &FileSearch::onSearchFinished);
+        activeTasks.append(task); // 保存正在运行的任务
         activeTaskCount++;
         threadPool->start(task);
     }
@@ -178,6 +180,7 @@ void FileSearch::onSearchFinished() {
     if (sender) {
         FileSearchThread *task = qobject_cast<FileSearchThread *>(sender);
         if (task) {
+            activeTasks.removeAll(task); // 从活动任务列表中移除已完成的任务
             task->deleteLater();
         }
     }
@@ -198,7 +201,9 @@ void FileSearch::updateProgressLabel() {
 }
 
 void FileSearch::onSearchTime(qint64 elapsedTime) {
-    QMessageBox::information(this, "搜索完成", QString("搜索耗时: %1 毫秒").arg(elapsedTime));
+    if(isStopping){
+        QMessageBox::information(this, "搜索完成", QString("搜索耗时: %1 毫秒").arg(elapsedTime));
+    }
     timer.invalidate();
     Logger::instance().log(QString("计时结束，搜索耗时: %1 毫秒").arg(elapsedTime));
 }
@@ -210,14 +215,27 @@ void FileSearch::onFinishButtonClicked() {
         return;
     }
 
-    threadPool->clear();
+    stopAllTasks();
     qint64 elapsedTime = timer.elapsed();
-    QMessageBox::information(this, "搜索中断", QString("搜索线程被中断，已耗时: %1 毫秒").arg(elapsedTime));
+    if (!isStopping){
+        QMessageBox::information(this, "搜索中断", QString("搜索线程被中断，已耗时: %1 毫秒").arg(elapsedTime));
+    }
     timer.invalidate();
     Logger::instance().log(QString("搜索线程被中断，已耗时: %1 毫秒").arg(elapsedTime));
+
+    finishSearch();  // 调用finishSearch()方法处理并显示剩余文件
+
     progressBar->setValue(progressBar->maximum());
     updateProgressLabel();
     isSearching = false;
+}
+
+void FileSearch::stopAllTasks() {
+    for (FileSearchThread *task : activeTasks) {
+        task->stop();
+    }
+    activeTasks.clear();
+    threadPool->clear();
 }
 
 void FileSearch::onSearchFilterChanged(const QString &text) {

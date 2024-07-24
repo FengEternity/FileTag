@@ -4,7 +4,7 @@
 #include "Logger.h"
 
 FileSearchThread::FileSearchThread(const QString &keyword, const QString &path, QObject *parent)
-        : QObject(parent), searchKeyword(keyword), searchPath(path) {
+        : QObject(parent), searchKeyword(keyword), searchPath(path), stopped(false) { // 初始化停止标志位
     Logger::instance().log("线程创建："+searchPath);
 }
 
@@ -18,7 +18,7 @@ void FileSearchThread::run() {
     Logger::instance().log("开始计时："+searchPath);
     QDirIterator it(searchPath, QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
     QEventLoop loop;
-    while (it.hasNext()) {
+    while (it.hasNext() && !stopped) { // 检查停止标志位
         QString filePath = it.next();
         QString fileName = it.fileName();
 
@@ -32,4 +32,8 @@ void FileSearchThread::run() {
     emit searchFinished(); // 搜索完成后发射 searchFinished 信号
     Logger::instance().log("线程结束："+searchPath);
     emit searchTime(timer.elapsed()); // 发射 searchTime 信号，传递耗时
+}
+
+void FileSearchThread::stop() {
+    stopped = true; // 设置停止标志位
 }
