@@ -20,25 +20,37 @@ FileSearch::FileSearch(QWidget *parent) :
         isSearching(false),
         firstSearch(true) // 初始化为 true
 {
+    // 设置 UI
     ui->setupUi(this);
 
+    // 连接界面元素到成员变量
     searchButton = ui->searchButton;
     searchLineEdit = ui->searchLineEdit;
     pathLineEdit = ui->pathLineEdit;
     filterLineEdit = ui->filterLineEdit;
     resultTableView = ui->resultTableView;
-    tableModel = new QStandardItemModel(this);
-    tableModel->setHorizontalHeaderLabels({"文件名", "文件路径", "文件类型", "创建时间", "修改时间"});
 
+    // 设置表格视图模型
+    tableModel = new QStandardItemModel(this);
+    tableModel->setHorizontalHeaderLabels({"序号", "文件名", "文件路径", "文件类型", "创建时间", "修改时间"});
+
+    // 设置代理模型
     proxyModel = new QSortFilterProxyModel(this);
     proxyModel->setSourceModel(tableModel);
     proxyModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
-    proxyModel->setFilterKeyColumn(-1);
+    proxyModel->setFilterKeyColumn(-1); // 过滤所有列
 
+    // 将代理模型设置到表格视图
+    proxyModel->setSortRole(Qt::UserRole); // 设置排序角色为用户角色
     resultTableView->setModel(proxyModel);
-    resultTableView->horizontalHeader()->setStretchLastSection(true);
+    resultTableView->horizontalHeader()->setStretchLastSection(true); // 自动调整最后一列的宽度
     resultTableView->setSortingEnabled(true);
+    resultTableView->sortByColumn(0, Qt::AscendingOrder); // 按照序列号列排序
 
+    // resultTableView->setColumnHidden(0, true); // 隐藏第一列
+
+
+    // 连接界面元素到槽函数
     finishButton = ui->finishButton;
     progressBar = ui->progressBar;
     progressLabel = ui->progressLabel;
@@ -84,6 +96,8 @@ void FileSearch::onSearchButtonClicked() {
     totalDirectories = 0;
     isSearching = true;
 
+    // resultTableView->setSortingEnabled(false);  // 禁用排序功能
+
     QDirIterator dirIt(searchPath, QDir::Dirs | QDir::NoDotAndDotDot);
     while (dirIt.hasNext()) {
         dirIt.next();
@@ -115,9 +129,14 @@ void FileSearch::onFileFound(const QString &filePath) {
         filesBatch.clear();
 
         auto updateUI = [this, filesBatchCopy]() {
+            int currentRowCount = tableModel->rowCount();
             for (const QString &filePath : filesBatchCopy) {
                 QFileInfo fileInfo(filePath);
                 QList<QStandardItem *> items;
+                // items.append(new QStandardItem(QString::number(++currentRowCount)));
+                QStandardItem *item0 = new QStandardItem(QString::number(++currentRowCount));
+                item0->setData(currentRowCount, Qt::UserRole); // 设置为数值类型
+                items.append(item0);
                 items.append(new QStandardItem(fileInfo.fileName()));
                 items.append(new QStandardItem(fileInfo.absoluteFilePath()));
                 items.append(new QStandardItem(fileInfo.suffix()));
@@ -134,9 +153,14 @@ void FileSearch::onFileFound(const QString &filePath) {
             filesBatch.clear();
 
             auto updateUI = [this, filesBatchCopy]() {
+                int currentRowCount = tableModel->rowCount();
                 for (const QString &filePath : filesBatchCopy) {
                     QFileInfo fileInfo(filePath);
                     QList<QStandardItem *> items;
+                    // items.append(new QStandardItem(QString::number(++currentRowCount)));
+                    QStandardItem *item0 = new QStandardItem(QString::number(++currentRowCount));
+                    item0->setData(currentRowCount, Qt::UserRole); // 设置为数值类型
+                    items.append(item0);
                     items.append(new QStandardItem(fileInfo.fileName()));
                     items.append(new QStandardItem(fileInfo.absoluteFilePath()));
                     items.append(new QStandardItem(fileInfo.suffix()));
@@ -156,9 +180,14 @@ void FileSearch::finishSearch() {
         filesBatch.clear();
 
         auto updateUI = [this, filesBatchCopy]() {
+            int currentRowCount = tableModel->rowCount();
             for (const QString &filePath : filesBatchCopy) {
                 QFileInfo fileInfo(filePath);
                 QList<QStandardItem *> items;
+                // items.append(new QStandardItem(QString::number(++currentRowCount)));
+                QStandardItem *item0 = new QStandardItem(QString::number(++currentRowCount));
+                item0->setData(currentRowCount, Qt::UserRole); // 设置为数值类型
+                items.append(item0);
                 items.append(new QStandardItem(fileInfo.fileName()));
                 items.append(new QStandardItem(fileInfo.absoluteFilePath()));
                 items.append(new QStandardItem(fileInfo.suffix()));
@@ -169,6 +198,9 @@ void FileSearch::finishSearch() {
         };
         QMetaObject::invokeMethod(this, updateUI, Qt::QueuedConnection);
     }
+
+    // resultTableView->setSortingEnabled(true);
+    // resultTableView->sortByColumn(0, Qt::AscendingOrder); // 按照序列号列排序
 }
 
 void FileSearch::onSearchFinished() {
