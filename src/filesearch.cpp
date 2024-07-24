@@ -49,7 +49,6 @@ FileSearch::FileSearch(QWidget *parent) :
 
     // resultTableView->setColumnHidden(0, true); // 隐藏第一列
 
-
     // 连接界面元素到槽函数
     finishButton = ui->finishButton;
     progressBar = ui->progressBar;
@@ -133,15 +132,31 @@ void FileSearch::onFileFound(const QString &filePath) {
             for (const QString &filePath : filesBatchCopy) {
                 QFileInfo fileInfo(filePath);
                 QList<QStandardItem *> items;
-                // items.append(new QStandardItem(QString::number(++currentRowCount)));
+                // 设置每列的排序角色值
                 QStandardItem *item0 = new QStandardItem(QString::number(++currentRowCount));
                 item0->setData(currentRowCount, Qt::UserRole); // 设置为数值类型
                 items.append(item0);
-                items.append(new QStandardItem(fileInfo.fileName()));
-                items.append(new QStandardItem(fileInfo.absoluteFilePath()));
-                items.append(new QStandardItem(fileInfo.suffix()));
-                items.append(new QStandardItem(fileInfo.birthTime().toString("yyyy-MM-dd HH:mm:ss")));
-                items.append(new QStandardItem(fileInfo.lastModified().toString("yyyy-MM-dd HH:mm:ss")));
+
+                QStandardItem *item1 = new QStandardItem(fileInfo.fileName());
+                item1->setData(fileInfo.fileName(), Qt::UserRole); // 设置为字符串类型
+                items.append(item1);
+
+                QStandardItem *item2 = new QStandardItem(fileInfo.absoluteFilePath());
+                item2->setData(fileInfo.absoluteFilePath(), Qt::UserRole); // 设置为字符串类型
+                items.append(item2);
+
+                QStandardItem *item3 = new QStandardItem(fileInfo.suffix());
+                item3->setData(fileInfo.suffix(), Qt::UserRole); // 设置为字符串类型
+                items.append(item3);
+
+                QStandardItem *item4 = new QStandardItem(fileInfo.birthTime().toString("yyyy-MM-dd HH:mm:ss"));
+                item4->setData(fileInfo.birthTime(), Qt::UserRole); // 设置为日期时间类型
+                items.append(item4);
+
+                QStandardItem *item5 = new QStandardItem(fileInfo.lastModified().toString("yyyy-MM-dd HH:mm:ss"));
+                item5->setData(fileInfo.lastModified(), Qt::UserRole); // 设置为日期时间类型
+                items.append(item5);
+
                 tableModel->appendRow(items);
             }
         };
@@ -157,15 +172,31 @@ void FileSearch::onFileFound(const QString &filePath) {
                 for (const QString &filePath : filesBatchCopy) {
                     QFileInfo fileInfo(filePath);
                     QList<QStandardItem *> items;
-                    // items.append(new QStandardItem(QString::number(++currentRowCount)));
+                    // 设置每列的排序角色值
                     QStandardItem *item0 = new QStandardItem(QString::number(++currentRowCount));
                     item0->setData(currentRowCount, Qt::UserRole); // 设置为数值类型
                     items.append(item0);
-                    items.append(new QStandardItem(fileInfo.fileName()));
-                    items.append(new QStandardItem(fileInfo.absoluteFilePath()));
-                    items.append(new QStandardItem(fileInfo.suffix()));
-                    items.append(new QStandardItem(fileInfo.birthTime().toString("yyyy-MM-dd HH:mm:ss")));
-                    items.append(new QStandardItem(fileInfo.lastModified().toString("yyyy-MM-dd HH:mm:ss")));
+
+                    QStandardItem *item1 = new QStandardItem(fileInfo.fileName());
+                    item1->setData(fileInfo.fileName(), Qt::UserRole); // 设置为字符串类型
+                    items.append(item1);
+
+                    QStandardItem *item2 = new QStandardItem(fileInfo.absoluteFilePath());
+                    item2->setData(fileInfo.absoluteFilePath(), Qt::UserRole); // 设置为字符串类型
+                    items.append(item2);
+
+                    QStandardItem *item3 = new QStandardItem(fileInfo.suffix());
+                    item3->setData(fileInfo.suffix(), Qt::UserRole); // 设置为字符串类型
+                    items.append(item3);
+
+                    QStandardItem *item4 = new QStandardItem(fileInfo.birthTime().toString("yyyy-MM-dd HH:mm:ss"));
+                    item4->setData(fileInfo.birthTime(), Qt::UserRole); // 设置为日期时间类型
+                    items.append(item4);
+
+                    QStandardItem *item5 = new QStandardItem(fileInfo.lastModified().toString("yyyy-MM-dd HH:mm:ss"));
+                    item5->setData(fileInfo.lastModified(), Qt::UserRole); // 设置为日期时间类型
+                    items.append(item5);
+
                     tableModel->appendRow(items);
                 }
             };
@@ -184,15 +215,31 @@ void FileSearch::finishSearch() {
             for (const QString &filePath : filesBatchCopy) {
                 QFileInfo fileInfo(filePath);
                 QList<QStandardItem *> items;
-                // items.append(new QStandardItem(QString::number(++currentRowCount)));
+                // 设置每列的排序角色值
                 QStandardItem *item0 = new QStandardItem(QString::number(++currentRowCount));
                 item0->setData(currentRowCount, Qt::UserRole); // 设置为数值类型
                 items.append(item0);
-                items.append(new QStandardItem(fileInfo.fileName()));
-                items.append(new QStandardItem(fileInfo.absoluteFilePath()));
-                items.append(new QStandardItem(fileInfo.suffix()));
-                items.append(new QStandardItem(fileInfo.birthTime().toString("yyyy-MM-dd HH:mm:ss")));
-                items.append(new QStandardItem(fileInfo.lastModified().toString("yyyy-MM-dd HH:mm:ss")));
+
+                QStandardItem *item1 = new QStandardItem(fileInfo.fileName());
+                item1->setData(fileInfo.fileName(), Qt::UserRole); // 设置为字符串类型
+                items.append(item1);
+
+                QStandardItem *item2 = new QStandardItem(fileInfo.absoluteFilePath());
+                item2->setData(fileInfo.absoluteFilePath(), Qt::UserRole); // 设置为字符串类型
+                items.append(item2);
+
+                QStandardItem *item3 = new QStandardItem(fileInfo.suffix());
+                item3->setData(fileInfo.suffix(), Qt::UserRole); // 设置为字符串类型
+                items.append(item3);
+
+                QStandardItem *item4 = new QStandardItem(fileInfo.birthTime().toString("yyyy-MM-dd HH:mm:ss"));
+                item4->setData(fileInfo.birthTime(), Qt::UserRole); // 设置为日期时间类型
+                items.append(item4);
+
+                QStandardItem *item5 = new QStandardItem(fileInfo.lastModified().toString("yyyy-MM-dd HH:mm:ss"));
+                item5->setData(fileInfo.lastModified(), Qt::UserRole); // 设置为日期时间类型
+                items.append(item5);
+
                 tableModel->appendRow(items);
             }
         };
