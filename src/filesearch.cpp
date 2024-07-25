@@ -105,12 +105,7 @@ void FileSearch::onSearchButtonClicked() {
     totalDirectories = 0;
     isSearching = true;
 
-    QDirIterator dirIt(searchPath, QDir::Dirs | QDir::NoDotAndDotDot);
-    while (dirIt.hasNext()) {
-        dirIt.next();
-        totalDirectories++;
-        taskQueue->enqueue(dirIt.filePath());
-    }
+    enqueueDirectories(searchPath, 2); // 调用新方法
 
     progressBar->setMaximum(totalDirectories);
     progressBar->setValue(0);
@@ -122,13 +117,33 @@ void FileSearch::onSearchButtonClicked() {
         connect(task, &FileSearchThread::fileFound, this, &FileSearch::onFileFound);
         connect(task, &FileSearchThread::searchFinished, this, &FileSearch::onSearchFinished);
         threadPool->start(task);
+        activeTaskCount++;
+    }
+}
+
+void FileSearch::enqueueDirectories(const QString &path, int depth) {
+    QDirIterator dirIt(path, QDir::Dirs | QDir::NoDotAndDotDot, QDirIterator::NoIteratorFlags);
+    while (dirIt.hasNext()) {
+        dirIt.next();
+        QString subDirPath = dirIt.filePath();
+        taskQueue->enqueue(subDirPath);
+        totalDirectories++;
+
+        if (depth > 1) {
+            QDirIterator subDirIt(subDirPath, QDir::Dirs | QDir::NoDotAndDotDot, QDirIterator::NoIteratorFlags);
+            while (subDirIt.hasNext()) {
+                subDirIt.next();
+                taskQueue->enqueue(subDirIt.filePath());
+                totalDirectories++;
+            }
+        }
     }
 }
 
 void FileSearch::onFileFound(const QString &filePath) {
     filesBatch.append(filePath);
 
-    if(firstSearch) {
+    if (firstSearch) {
         QVector<QString> filesBatchCopy = filesBatch;
         filesBatch.clear();
 
@@ -253,11 +268,12 @@ void FileSearch::finishSearch() {
 }
 
 void FileSearch::onSearchFinished() {
+    QMutexLocker locker(queueMutex);
     activeTaskCount--;
     progressBar->setValue(progressBar->value() + 1);
     updateProgressLabel();
 
-    if (activeTaskCount == 0) {
+    if (activeTaskCount == 0 && taskQueue->isEmpty()) {
         finishSearch();
         qint64 elapsedTime = timer.elapsed();
         onSearchTime(elapsedTime);

@@ -70,6 +70,8 @@ private:
     QQueue<QString> *taskQueue;
     QMutex *queueMutex;
     QWaitCondition *queueCondition;
+
+    void enqueueDirectories(const QString &path, int depth); // 新增方法声明
 };
 
 #endif // FILESEARCH_H
