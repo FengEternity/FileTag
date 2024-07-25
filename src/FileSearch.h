@@ -12,6 +12,9 @@
 #include <QLabel>
 #include <QSortFilterProxyModel>
 #include <QVector>
+#include <QQueue>
+#include <QMutex>
+#include <QWaitCondition>
 
 #include "FileSearchThread.h"
 
@@ -57,11 +60,16 @@ private:
     void stopAllTasks();
 
     bool isSearching;
-    bool firstSearch = true;
-    bool isStopping = false;
+    bool firstSearch;
+    bool isStopping;
     static QVector<QString> filesBatch; // 声明静态变量
 
     QVector<FileSearchThread *> activeTasks; // 新增保存活动任务的成员变量
+
+    // 新增任务队列和同步机制的变量
+    QQueue<QString> *taskQueue;
+    QMutex *queueMutex;
+    QWaitCondition *queueCondition;
 };
 
 #endif // FILESEARCH_H

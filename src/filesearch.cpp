@@ -6,6 +6,10 @@
 #include <QDirIterator>
 #include <QVBoxLayout>
 #include <QMessageBox>
+#include <QQueue>
+#include <QMutex>
+#include <QMutexLocker>
+#include <QWaitCondition>
 
 // 定义静态成员变量
 QVector<QString> FileSearch::filesBatch;
@@ -47,8 +51,6 @@ FileSearch::FileSearch(QWidget *parent) :
     resultTableView->setSortingEnabled(true);
     resultTableView->sortByColumn(0, Qt::AscendingOrder); // 按照序列号列排序
 
-    // resultTableView->setColumnHidden(0, true); // 隐藏第一列
-
     // 连接界面元素到槽函数
     finishButton = ui->finishButton;
     progressBar = ui->progressBar;
@@ -69,12 +71,20 @@ FileSearch::FileSearch(QWidget *parent) :
 
     threadPool->setMaxThreadCount(QThread::idealThreadCount());
     Logger::instance().log("线程池初始化完成, 最大线程数: " + QString::number(threadPool->maxThreadCount()));
+
+    // 初始化任务队列和相关同步机制
+    taskQueue = new QQueue<QString>();
+    queueMutex = new QMutex();
+    queueCondition = new QWaitCondition();
 }
 
 FileSearch::~FileSearch() {
     stopAllTasks(); // 确保析构时停止所有任务
     threadPool->waitForDone();
     delete ui;
+    delete taskQueue;
+    delete queueMutex;
+    delete queueCondition;
 }
 
 void FileSearch::onSearchButtonClicked() {
@@ -95,33 +105,28 @@ void FileSearch::onSearchButtonClicked() {
     totalDirectories = 0;
     isSearching = true;
 
-    // resultTableView->setSortingEnabled(false);  // 禁用排序功能
-
     QDirIterator dirIt(searchPath, QDir::Dirs | QDir::NoDotAndDotDot);
     while (dirIt.hasNext()) {
         dirIt.next();
         totalDirectories++;
+        taskQueue->enqueue(dirIt.filePath());
     }
 
     progressBar->setMaximum(totalDirectories);
     progressBar->setValue(0);
     updateProgressLabel();
 
-    QDirIterator it(searchPath, QDir::Dirs | QDir::NoDotAndDotDot);
-    while (it.hasNext()) {
-        QString dirPath = it.next();
-        auto *task = new FileSearchThread(searchKeyword, dirPath);
+    // 创建和启动任务消费者线程
+    for (int i = 0; i < threadPool->maxThreadCount(); ++i) {
+        FileSearchThread *task = new FileSearchThread(searchKeyword, taskQueue, queueMutex, queueCondition);
         connect(task, &FileSearchThread::fileFound, this, &FileSearch::onFileFound);
         connect(task, &FileSearchThread::searchFinished, this, &FileSearch::onSearchFinished);
-        activeTasks.append(task); // 保存正在运行的任务
-        activeTaskCount++;
         threadPool->start(task);
     }
 }
 
 void FileSearch::onFileFound(const QString &filePath) {
     filesBatch.append(filePath);
-    // Logger::instance().log("文件找到: " + filePath);
 
     if(firstSearch) {
         QVector<QString> filesBatchCopy = filesBatch;
@@ -132,36 +137,36 @@ void FileSearch::onFileFound(const QString &filePath) {
             for (const QString &filePath : filesBatchCopy) {
                 QFileInfo fileInfo(filePath);
                 QList<QStandardItem *> items;
-                // 设置每列的排序角色值
+
                 QStandardItem *item0 = new QStandardItem(QString::number(++currentRowCount));
-                item0->setData(currentRowCount, Qt::UserRole); // 设置为数值类型
+                item0->setData(currentRowCount, Qt::UserRole);
                 items.append(item0);
 
                 QStandardItem *item1 = new QStandardItem(fileInfo.fileName());
-                item1->setData(fileInfo.fileName(), Qt::UserRole); // 设置为字符串类型
+                item1->setData(fileInfo.fileName(), Qt::UserRole);
                 items.append(item1);
 
                 QStandardItem *item2 = new QStandardItem(fileInfo.absoluteFilePath());
-                item2->setData(fileInfo.absoluteFilePath(), Qt::UserRole); // 设置为字符串类型
+                item2->setData(fileInfo.absoluteFilePath(), Qt::UserRole);
                 items.append(item2);
 
                 QStandardItem *item3 = new QStandardItem(fileInfo.suffix());
-                item3->setData(fileInfo.suffix(), Qt::UserRole); // 设置为字符串类型
+                item3->setData(fileInfo.suffix(), Qt::UserRole);
                 items.append(item3);
 
                 QStandardItem *item4 = new QStandardItem(fileInfo.birthTime().toString("yyyy-MM-dd HH:mm:ss"));
-                item4->setData(fileInfo.birthTime(), Qt::UserRole); // 设置为日期时间类型
+                item4->setData(fileInfo.birthTime(), Qt::UserRole);
                 items.append(item4);
 
                 QStandardItem *item5 = new QStandardItem(fileInfo.lastModified().toString("yyyy-MM-dd HH:mm:ss"));
-                item5->setData(fileInfo.lastModified(), Qt::UserRole); // 设置为日期时间类型
+                item5->setData(fileInfo.lastModified(), Qt::UserRole);
                 items.append(item5);
 
                 tableModel->appendRow(items);
             }
         };
         QMetaObject::invokeMethod(this, updateUI, Qt::QueuedConnection);
-        firstSearch = false; // 设置为 false，表示已经进行了第一次搜索
+        firstSearch = false;
     } else {
         if (++updateCounter % 500 == 0) {
             QVector<QString> filesBatchCopy = filesBatch;
@@ -172,29 +177,29 @@ void FileSearch::onFileFound(const QString &filePath) {
                 for (const QString &filePath : filesBatchCopy) {
                     QFileInfo fileInfo(filePath);
                     QList<QStandardItem *> items;
-                    // 设置每列的排序角色值
+
                     QStandardItem *item0 = new QStandardItem(QString::number(++currentRowCount));
-                    item0->setData(currentRowCount, Qt::UserRole); // 设置为数值类型
+                    item0->setData(currentRowCount, Qt::UserRole);
                     items.append(item0);
 
                     QStandardItem *item1 = new QStandardItem(fileInfo.fileName());
-                    item1->setData(fileInfo.fileName(), Qt::UserRole); // 设置为字符串类型
+                    item1->setData(fileInfo.fileName(), Qt::UserRole);
                     items.append(item1);
 
                     QStandardItem *item2 = new QStandardItem(fileInfo.absoluteFilePath());
-                    item2->setData(fileInfo.absoluteFilePath(), Qt::UserRole); // 设置为字符串类型
+                    item2->setData(fileInfo.absoluteFilePath(), Qt::UserRole);
                     items.append(item2);
 
                     QStandardItem *item3 = new QStandardItem(fileInfo.suffix());
-                    item3->setData(fileInfo.suffix(), Qt::UserRole); // 设置为字符串类型
+                    item3->setData(fileInfo.suffix(), Qt::UserRole);
                     items.append(item3);
 
                     QStandardItem *item4 = new QStandardItem(fileInfo.birthTime().toString("yyyy-MM-dd HH:mm:ss"));
-                    item4->setData(fileInfo.birthTime(), Qt::UserRole); // 设置为日期时间类型
+                    item4->setData(fileInfo.birthTime(), Qt::UserRole);
                     items.append(item4);
 
                     QStandardItem *item5 = new QStandardItem(fileInfo.lastModified().toString("yyyy-MM-dd HH:mm:ss"));
-                    item5->setData(fileInfo.lastModified(), Qt::UserRole); // 设置为日期时间类型
+                    item5->setData(fileInfo.lastModified(), Qt::UserRole);
                     items.append(item5);
 
                     tableModel->appendRow(items);
@@ -215,29 +220,29 @@ void FileSearch::finishSearch() {
             for (const QString &filePath : filesBatchCopy) {
                 QFileInfo fileInfo(filePath);
                 QList<QStandardItem *> items;
-                // 设置每列的排序角色值
+
                 QStandardItem *item0 = new QStandardItem(QString::number(++currentRowCount));
-                item0->setData(currentRowCount, Qt::UserRole); // 设置为数值类型
+                item0->setData(currentRowCount, Qt::UserRole);
                 items.append(item0);
 
                 QStandardItem *item1 = new QStandardItem(fileInfo.fileName());
-                item1->setData(fileInfo.fileName(), Qt::UserRole); // 设置为字符串类型
+                item1->setData(fileInfo.fileName(), Qt::UserRole);
                 items.append(item1);
 
                 QStandardItem *item2 = new QStandardItem(fileInfo.absoluteFilePath());
-                item2->setData(fileInfo.absoluteFilePath(), Qt::UserRole); // 设置为字符串类型
+                item2->setData(fileInfo.absoluteFilePath(), Qt::UserRole);
                 items.append(item2);
 
                 QStandardItem *item3 = new QStandardItem(fileInfo.suffix());
-                item3->setData(fileInfo.suffix(), Qt::UserRole); // 设置为字符串类型
+                item3->setData(fileInfo.suffix(), Qt::UserRole);
                 items.append(item3);
 
                 QStandardItem *item4 = new QStandardItem(fileInfo.birthTime().toString("yyyy-MM-dd HH:mm:ss"));
-                item4->setData(fileInfo.birthTime(), Qt::UserRole); // 设置为日期时间类型
+                item4->setData(fileInfo.birthTime(), Qt::UserRole);
                 items.append(item4);
 
                 QStandardItem *item5 = new QStandardItem(fileInfo.lastModified().toString("yyyy-MM-dd HH:mm:ss"));
-                item5->setData(fileInfo.lastModified(), Qt::UserRole); // 设置为日期时间类型
+                item5->setData(fileInfo.lastModified(), Qt::UserRole);
                 items.append(item5);
 
                 tableModel->appendRow(items);
@@ -245,9 +250,6 @@ void FileSearch::finishSearch() {
         };
         QMetaObject::invokeMethod(this, updateUI, Qt::QueuedConnection);
     }
-
-    // resultTableView->setSortingEnabled(true);
-    // resultTableView->sortByColumn(0, Qt::AscendingOrder); // 按照序列号列排序
 }
 
 void FileSearch::onSearchFinished() {
@@ -255,17 +257,8 @@ void FileSearch::onSearchFinished() {
     progressBar->setValue(progressBar->value() + 1);
     updateProgressLabel();
 
-    QObject *sender = QObject::sender();
-    if (sender) {
-        FileSearchThread *task = qobject_cast<FileSearchThread *>(sender);
-        if (task) {
-            activeTasks.removeAll(task); // 从活动任务列表中移除已完成的任务
-            task->deleteLater();
-        }
-    }
-
     if (activeTaskCount == 0) {
-        finishSearch(); // 确保处理剩余文件
+        finishSearch();
         qint64 elapsedTime = timer.elapsed();
         onSearchTime(elapsedTime);
         progressBar->setValue(totalDirectories);
@@ -285,7 +278,6 @@ void FileSearch::onSearchTime(qint64 elapsedTime) {
     }
     timer.invalidate();
     Logger::instance().log(QString("计时结束，搜索耗时: %1 毫秒").arg(elapsedTime));
-
 }
 
 void FileSearch::onFinishButtonClicked() {
@@ -303,7 +295,7 @@ void FileSearch::onFinishButtonClicked() {
     timer.invalidate();
     Logger::instance().log(QString("搜索线程被中断，已耗时: %1 毫秒").arg(elapsedTime));
 
-    finishSearch();  // 调用finishSearch()方法处理并显示剩余文件
+    finishSearch();
 
     progressBar->setValue(progressBar->maximum());
     updateProgressLabel();
@@ -311,11 +303,12 @@ void FileSearch::onFinishButtonClicked() {
 }
 
 void FileSearch::stopAllTasks() {
-    for (FileSearchThread *task : activeTasks) {
-        task->stop();
+    QMutexLocker locker(queueMutex);
+    isStopping = true;
+    while (!taskQueue->isEmpty()) {
+        taskQueue->dequeue();
     }
-    activeTasks.clear();
-    threadPool->clear();
+    queueCondition->wakeAll();
 }
 
 void FileSearch::onSearchFilterChanged(const QString &text) {
