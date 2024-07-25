@@ -156,7 +156,8 @@ void FileSearch::onFileFound(const QString &filePath) {
         uniqueFiles.insert(filePath);
         filesBatch.append(filePath);
 
-        if (firstSearch) {
+        // 如果文件数目不足500，则直接更新
+        if (firstSearch || filesBatch.size() < 500) {
             QVector<QString> filesBatchCopy = filesBatch;
             filesBatch.clear();
 
@@ -196,7 +197,8 @@ void FileSearch::onFileFound(const QString &filePath) {
             QMetaObject::invokeMethod(this, updateUI, Qt::QueuedConnection);
             firstSearch = false;
         } else {
-            if (++updateCounter % 500 == 0) {
+            // 超过500后，每1000次更新一次
+            if (++updateCounter % 1000 == 0) {
                 QVector<QString> filesBatchCopy = filesBatch;
                 filesBatch.clear();
 
