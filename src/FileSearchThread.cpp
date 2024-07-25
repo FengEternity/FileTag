@@ -1,3 +1,5 @@
+// FileSearchThread.cpp
+
 #include "FileSearchThread.h"
 #include "Logger.h"
 #include <QDirIterator>

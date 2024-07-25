@@ -1,3 +1,5 @@
+// FileSearchThread.h
+
 #ifndef FILESEARCHTHREAD_H
 #define FILESEARCHTHREAD_H
 

@@ -1,3 +1,5 @@
+// FileSearch.h
+
 #ifndef FILESEARCH_H
 #define FILESEARCH_H
 
@@ -15,7 +17,7 @@
 #include <QQueue>
 #include <QMutex>
 #include <QWaitCondition>
-
+#include <QSet>
 #include "FileSearchThread.h"
 
 namespace Ui {
@@ -63,6 +65,8 @@ private:
     bool firstSearch;
     bool isStopping;
     static QVector<QString> filesBatch; // 声明静态变量
+    QSet<QString> uniquePaths; // 用于记录已处理的目录
+    QSet<QString> uniqueFiles; // 用于记录已记录的文件
 
     QVector<FileSearchThread *> activeTasks; // 新增保存活动任务的成员变量
 

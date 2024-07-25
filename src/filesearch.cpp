@@ -1,3 +1,5 @@
+// FileSearch.cpp
+
 #include "FileSearch.h"
 #include "ui_FileSearch.h"
 #include "Logger.h"
@@ -105,6 +107,8 @@ void FileSearch::onSearchButtonClicked() {
     totalDirectories = 0;
     isSearching = true;
 
+    uniquePaths.clear();
+    uniqueFiles.clear();
     enqueueDirectories(searchPath, 2); // 调用新方法
 
     progressBar->setMaximum(totalDirectories);
@@ -126,64 +130,33 @@ void FileSearch::enqueueDirectories(const QString &path, int depth) {
     while (dirIt.hasNext()) {
         dirIt.next();
         QString subDirPath = dirIt.filePath();
-        taskQueue->enqueue(subDirPath);
-        totalDirectories++;
+        if (!uniquePaths.contains(subDirPath)) {
+            uniquePaths.insert(subDirPath);
+            taskQueue->enqueue(subDirPath);
+            totalDirectories++;
 
-        if (depth > 1) {
-            QDirIterator subDirIt(subDirPath, QDir::Dirs | QDir::NoDotAndDotDot, QDirIterator::NoIteratorFlags);
-            while (subDirIt.hasNext()) {
-                subDirIt.next();
-                taskQueue->enqueue(subDirIt.filePath());
-                totalDirectories++;
+            if (depth > 1) {
+                QDirIterator subDirIt(subDirPath, QDir::Dirs | QDir::NoDotAndDotDot, QDirIterator::NoIteratorFlags);
+                while (subDirIt.hasNext()) {
+                    subDirIt.next();
+                    QString subSubDirPath = subDirIt.filePath();
+                    if (!uniquePaths.contains(subSubDirPath)) {
+                        uniquePaths.insert(subSubDirPath);
+                        taskQueue->enqueue(subSubDirPath);
+                        totalDirectories++;
+                    }
+                }
             }
         }
     }
 }
 
 void FileSearch::onFileFound(const QString &filePath) {
-    filesBatch.append(filePath);
+    if (!uniqueFiles.contains(filePath)) {
+        uniqueFiles.insert(filePath);
+        filesBatch.append(filePath);
 
-    if (firstSearch) {
-        QVector<QString> filesBatchCopy = filesBatch;
-        filesBatch.clear();
-
-        auto updateUI = [this, filesBatchCopy]() {
-            int currentRowCount = tableModel->rowCount();
-            for (const QString &filePath : filesBatchCopy) {
-                QFileInfo fileInfo(filePath);
-                QList<QStandardItem *> items;
-
-                QStandardItem *item0 = new QStandardItem(QString::number(++currentRowCount));
-                item0->setData(currentRowCount, Qt::UserRole);
-                items.append(item0);
-
-                QStandardItem *item1 = new QStandardItem(fileInfo.fileName());
-                item1->setData(fileInfo.fileName(), Qt::UserRole);
-                items.append(item1);
-
-                QStandardItem *item2 = new QStandardItem(fileInfo.absoluteFilePath());
-                item2->setData(fileInfo.absoluteFilePath(), Qt::UserRole);
-                items.append(item2);
-
-                QStandardItem *item3 = new QStandardItem(fileInfo.suffix());
-                item3->setData(fileInfo.suffix(), Qt::UserRole);
-                items.append(item3);
-
-                QStandardItem *item4 = new QStandardItem(fileInfo.birthTime().toString("yyyy-MM-dd HH:mm:ss"));
-                item4->setData(fileInfo.birthTime(), Qt::UserRole);
-                items.append(item4);
-
-                QStandardItem *item5 = new QStandardItem(fileInfo.lastModified().toString("yyyy-MM-dd HH:mm:ss"));
-                item5->setData(fileInfo.lastModified(), Qt::UserRole);
-                items.append(item5);
-
-                tableModel->appendRow(items);
-            }
-        };
-        QMetaObject::invokeMethod(this, updateUI, Qt::QueuedConnection);
-        firstSearch = false;
-    } else {
-        if (++updateCounter % 500 == 0) {
+        if (firstSearch) {
             QVector<QString> filesBatchCopy = filesBatch;
             filesBatch.clear();
 
@@ -221,6 +194,47 @@ void FileSearch::onFileFound(const QString &filePath) {
                 }
             };
             QMetaObject::invokeMethod(this, updateUI, Qt::QueuedConnection);
+            firstSearch = false;
+        } else {
+            if (++updateCounter % 500 == 0) {
+                QVector<QString> filesBatchCopy = filesBatch;
+                filesBatch.clear();
+
+                auto updateUI = [this, filesBatchCopy]() {
+                    int currentRowCount = tableModel->rowCount();
+                    for (const QString &filePath : filesBatchCopy) {
+                        QFileInfo fileInfo(filePath);
+                        QList<QStandardItem *> items;
+
+                        QStandardItem *item0 = new QStandardItem(QString::number(++currentRowCount));
+                        item0->setData(currentRowCount, Qt::UserRole);
+                        items.append(item0);
+
+                        QStandardItem *item1 = new QStandardItem(fileInfo.fileName());
+                        item1->setData(fileInfo.fileName(), Qt::UserRole);
+                        items.append(item1);
+
+                        QStandardItem *item2 = new QStandardItem(fileInfo.absoluteFilePath());
+                        item2->setData(fileInfo.absoluteFilePath(), Qt::UserRole);
+                        items.append(item2);
+
+                        QStandardItem *item3 = new QStandardItem(fileInfo.suffix());
+                        item3->setData(fileInfo.suffix(), Qt::UserRole);
+                        items.append(item3);
+
+                        QStandardItem *item4 = new QStandardItem(fileInfo.birthTime().toString("yyyy-MM-dd HH:mm:ss"));
+                        item4->setData(fileInfo.birthTime(), Qt::UserRole);
+                        items.append(item4);
+
+                        QStandardItem *item5 = new QStandardItem(fileInfo.lastModified().toString("yyyy-MM-dd HH:mm:ss"));
+                        item5->setData(fileInfo.lastModified(), Qt::UserRole);
+                        items.append(item5);
+
+                        tableModel->appendRow(items);
+                    }
+                };
+                QMetaObject::invokeMethod(this, updateUI, Qt::QueuedConnection);
+            }
         }
     }
 }
