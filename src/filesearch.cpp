@@ -121,7 +121,7 @@ void FileSearch::onSearchButtonClicked() {
 
 void FileSearch::onFileFound(const QString &filePath) {
     filesBatch.append(filePath);
-    Logger::instance().log("文件找到: " + filePath);
+    // Logger::instance().log("文件找到: " + filePath);
 
     if(firstSearch) {
         QVector<QString> filesBatchCopy = filesBatch;
@@ -280,11 +280,12 @@ void FileSearch::updateProgressLabel() {
 }
 
 void FileSearch::onSearchTime(qint64 elapsedTime) {
-    if(isStopping){
+    if(!isStopping){
         QMessageBox::information(this, "搜索完成", QString("搜索耗时: %1 毫秒").arg(elapsedTime));
     }
     timer.invalidate();
     Logger::instance().log(QString("计时结束，搜索耗时: %1 毫秒").arg(elapsedTime));
+
 }
 
 void FileSearch::onFinishButtonClicked() {
