@@ -298,7 +298,8 @@ void MainWindow::showFilePreview(const QString &filePath) {
 void MainWindow::showAboutDialog() {
     QMessageBox::about(this, "关于", "FileTag 是一个简单的文件标签工具。\n"
                                      "版本：1.0\n"
-                                     "作者：Montee");
+                                     "作者：Montee\n"
+                                     "协作者：Cranzz");
 }
 
 // 显示帮助文档
