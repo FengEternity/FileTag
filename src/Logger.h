@@ -5,6 +5,7 @@
 #include <QFile>
 #include <QTextStream>
 #include <QMutex>
+#include <QDate>
 
 class Logger {
 public:
@@ -17,9 +18,13 @@ private:
     Logger(const Logger&) = delete;
     Logger& operator=(const Logger&) = delete;
 
+    void rotateLogFiles();
+    QString generateLogFileName();
+
     QFile logFile;
     QTextStream logStream;
     QMutex mutex;
+    QDate currentDate;
 };
 
 #endif // LOGGER_H
