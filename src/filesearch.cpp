@@ -24,7 +24,8 @@ FileSearch::FileSearch(QWidget *parent) :
         activeTaskCount(0),
         totalDirectories(0),
         isSearching(false),
-        firstSearch(true) // 初始化为 true
+        firstSearch(true)
+
 {
     // 设置 UI
     ui->setupUi(this);
@@ -34,8 +35,7 @@ FileSearch::FileSearch(QWidget *parent) :
     searchLineEdit = ui->searchLineEdit;
     pathLineEdit = ui->pathLineEdit;
     filterLineEdit = ui->filterLineEdit;
-    resultTableView = ui->resultTableView;
-
+    resultTableView = new QTableView(this);
     // 设置表格视图模型
     tableModel = new QStandardItemModel(this);
     tableModel->setHorizontalHeaderLabels({"序号", "文件名", "文件路径", "文件类型", "创建时间", "修改时间"});
@@ -44,14 +44,16 @@ FileSearch::FileSearch(QWidget *parent) :
     proxyModel = new QSortFilterProxyModel(this);
     proxyModel->setSourceModel(tableModel);
     proxyModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
-    proxyModel->setFilterKeyColumn(-1); // 过滤所有列
+    proxyModel->setFilterKeyColumn(-1);
+    proxyModel->setSortRole(Qt::UserRole);
 
     // 将代理模型设置到表格视图
-    proxyModel->setSortRole(Qt::UserRole); // 设置排序角色为用户角色
     resultTableView->setModel(proxyModel);
-    resultTableView->horizontalHeader()->setStretchLastSection(true); // 自动调整最后一列的宽度
+    resultTableView->horizontalHeader()->setStretchLastSection(true);
     resultTableView->setSortingEnabled(true);
-    resultTableView->sortByColumn(0, Qt::AscendingOrder); // 按照序列号列排序
+    resultTableView->sortByColumn(0, Qt::AscendingOrder);
+
+
 
     // 连接界面元素到槽函数
     finishButton = ui->finishButton;
@@ -64,13 +66,6 @@ FileSearch::FileSearch(QWidget *parent) :
 
     Logger::instance().log("表格视图模型设置完成。");
 
-    if (!layout()) {
-        auto *layout = new QVBoxLayout(this);
-        layout->addWidget(filterLineEdit);
-        layout->addWidget(resultTableView);
-        setLayout(layout);
-    }
-
     threadPool->setMaxThreadCount(QThread::idealThreadCount());
     Logger::instance().log("线程池初始化完成, 最大线程数: " + QString::number(threadPool->maxThreadCount()));
 
@@ -81,12 +76,27 @@ FileSearch::FileSearch(QWidget *parent) :
 }
 
 FileSearch::~FileSearch() {
-    stopAllTasks(); // 确保析构时停止所有任务
+    stopAllTasks();
     threadPool->waitForDone();
     delete ui;
     delete taskQueue;
     delete queueMutex;
     delete queueCondition;
+}
+void FileSearch::resizeEvent(QResizeEvent *event)
+{
+    int availableWidth = width();
+    int availableHeight = height();
+
+    int tableWidth = availableWidth * 0.96;
+    int tableHeight = (availableHeight-20) * 0.2;
+
+
+    // 调整表格视图位置使其居于窗口中心的三分之二处
+    int tableX = (availableWidth - tableWidth) / 1.59;
+    int tableY = (availableHeight - tableHeight) / 1.59;
+
+    resultTableView->setGeometry(tableX, tableY, tableWidth, tableHeight);
 }
 
 void FileSearch::onSearchButtonClicked() {
