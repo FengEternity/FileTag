@@ -88,13 +88,13 @@ void FileSearch::resizeEvent(QResizeEvent *event)
     int availableWidth = width();
     int availableHeight = height();
 
-    int tableWidth = availableWidth * 0.96;
-    int tableHeight = (availableHeight-20) * 0.2;
+    int tableWidth = availableWidth * 0.988;
+    int tableHeight = (availableHeight)  -325;
 
 
     // 调整表格视图位置使其居于窗口中心的三分之二处
-    int tableX = (availableWidth - tableWidth) / 1.59;
-    int tableY = (availableHeight - tableHeight) / 1.59;
+    int tableX = (availableWidth - tableWidth) / 1.67;
+    int tableY = (availableHeight - tableHeight) / 1.67;
 
     resultTableView->setGeometry(tableX, tableY, tableWidth, tableHeight);
 }
