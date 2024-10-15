@@ -54,7 +54,6 @@ FileSearch::FileSearch(QWidget *parent) :
     resultTableView->sortByColumn(0, Qt::AscendingOrder);
 
 
-
     // 连接界面元素到槽函数
     finishButton = ui->finishButton;
     progressBar = ui->progressBar;
@@ -90,8 +89,6 @@ void FileSearch::resizeEvent(QResizeEvent *event)
 
     int tableWidth = availableWidth * 0.988;
     int tableHeight = (availableHeight)  -325;
-
-
     // 调整表格视图位置使其居于窗口中心的三分之二处
     int tableX = (availableWidth - tableWidth) / 1.67;
     int tableY = (availableHeight - tableHeight) / 1.67;
@@ -124,7 +121,6 @@ void FileSearch::onSearchButtonClicked() {
     progressBar->setMaximum(totalDirectories);
     progressBar->setValue(0);
     updateProgressLabel();
-
     // 创建和启动任务消费者线程
     for (int i = 0; i < threadPool->maxThreadCount(); ++i) {
         FileSearchThread *task = new FileSearchThread(searchKeyword, taskQueue, queueMutex, queueCondition);
