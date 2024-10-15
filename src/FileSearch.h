@@ -37,8 +37,10 @@ private slots:
     void onSearchFinished();
     void onFinishButtonClicked();
     void onSearchFilterChanged(const QString &text);
+
 protected:
     void resizeEvent(QResizeEvent *event) override;
+
 private:
     Ui::FileSearch *ui;
     QThreadPool *threadPool;

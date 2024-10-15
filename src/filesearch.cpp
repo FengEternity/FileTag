@@ -65,6 +65,13 @@ FileSearch::FileSearch(QWidget *parent) :
 
     Logger::instance().log("表格视图模型设置完成。");
 
+    if (!layout()) {
+        auto *layout = new QVBoxLayout(this);
+        layout->addWidget(filterLineEdit);
+        layout->addWidget(resultTableView);
+        setLayout(layout);
+    }
+
     threadPool->setMaxThreadCount(QThread::idealThreadCount());
     Logger::instance().log("线程池初始化完成, 最大线程数: " + QString::number(threadPool->maxThreadCount()));
 
@@ -82,6 +89,7 @@ FileSearch::~FileSearch() {
     delete queueMutex;
     delete queueCondition;
 }
+
 void FileSearch::resizeEvent(QResizeEvent *event)
 {
     int availableWidth = width();
