@@ -134,8 +134,8 @@ void FileSearch::onSearchButtonClicked() {
         FileSearchThread *task = new FileSearchThread(searchKeyword, taskQueue, queueMutex, queueCondition);
         connect(task, &FileSearchThread::fileFound, this, &FileSearch::onFileFound);
         connect(task, &FileSearchThread::searchFinished, this, &FileSearch::onSearchFinished);
+        connect(task, &FileSearchThread::taskStarted, this, &FileSearch::onTaskStarted);
         threadPool->start(task);
-        activeTaskCount++;
     }
 }
 
@@ -300,6 +300,7 @@ void FileSearch::finishSearch() {
 void FileSearch::onSearchFinished() {
     QMutexLocker locker(queueMutex);
     activeTaskCount--;
+    // Logger::instance().log("activeTaskCount 减少，当前计数: " + QString::number(activeTaskCount));
     progressBar->setValue(progressBar->value() + 1);
     updateProgressLabel();
 
@@ -360,3 +361,10 @@ void FileSearch::stopAllTasks() {
 void FileSearch::onSearchFilterChanged(const QString &text) {
     proxyModel->setFilterWildcard(text);
 }
+
+void FileSearch::onTaskStarted() {
+    QMutexLocker locker(queueMutex);
+    activeTaskCount++;
+    // Logger::instance().log("activeTaskCount 增加，当前计数: " + QString::number(activeTaskCount));
+}
+

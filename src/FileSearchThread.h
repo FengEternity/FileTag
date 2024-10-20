@@ -20,6 +20,7 @@ public:
 signals:
     void fileFound(const QString &filePath);
     void searchFinished();
+    void taskStarted();
 
 private:
     QString searchKeyword;
