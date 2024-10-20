@@ -28,6 +28,8 @@ void FileSearchThread::run() {
                 continue;
             }
             searchPath = taskQueue->dequeue();
+
+            emit taskStarted();
         }
 
         if (searchPath.isEmpty()) {

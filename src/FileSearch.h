@@ -2,7 +2,7 @@
 
 #ifndef FILESEARCH_H
 #define FILESEARCH_H
-
+#include <QVBoxLayout>
 #include <QWidget>
 #include <QLineEdit>
 #include <QTableView>
@@ -38,6 +38,9 @@ private slots:
     void onFinishButtonClicked();
     void onSearchFilterChanged(const QString &text);
 
+protected:
+    void resizeEvent(QResizeEvent *event) override;
+
 private:
     Ui::FileSearch *ui;
     QThreadPool *threadPool;
@@ -60,6 +63,7 @@ private:
     void updateProgressLabel();
     void finishSearch();
     void stopAllTasks();
+    void onTaskStarted();
 
     bool isSearching;
     bool firstSearch;
@@ -74,7 +78,7 @@ private:
     QQueue<QString> *taskQueue;
     QMutex *queueMutex;
     QWaitCondition *queueCondition;
-
+    QVBoxLayout *layoutForThisTable;
     void enqueueDirectories(const QString &path, int depth); // 新增方法声明
 };
 

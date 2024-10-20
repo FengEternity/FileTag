@@ -24,7 +24,8 @@ FileSearch::FileSearch(QWidget *parent) :
         activeTaskCount(0),
         totalDirectories(0),
         isSearching(false),
-        firstSearch(true) // 初始化为 true
+        firstSearch(true)
+
 {
     // 设置 UI
     ui->setupUi(this);
@@ -34,8 +35,7 @@ FileSearch::FileSearch(QWidget *parent) :
     searchLineEdit = ui->searchLineEdit;
     pathLineEdit = ui->pathLineEdit;
     filterLineEdit = ui->filterLineEdit;
-    resultTableView = ui->resultTableView;
-
+    resultTableView = new QTableView(this);
     // 设置表格视图模型
     tableModel = new QStandardItemModel(this);
     tableModel->setHorizontalHeaderLabels({"序号", "文件名", "文件路径", "文件类型", "创建时间", "修改时间"});
@@ -44,14 +44,15 @@ FileSearch::FileSearch(QWidget *parent) :
     proxyModel = new QSortFilterProxyModel(this);
     proxyModel->setSourceModel(tableModel);
     proxyModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
-    proxyModel->setFilterKeyColumn(-1); // 过滤所有列
+    proxyModel->setFilterKeyColumn(-1);
+    proxyModel->setSortRole(Qt::UserRole);
 
     // 将代理模型设置到表格视图
-    proxyModel->setSortRole(Qt::UserRole); // 设置排序角色为用户角色
     resultTableView->setModel(proxyModel);
-    resultTableView->horizontalHeader()->setStretchLastSection(true); // 自动调整最后一列的宽度
+    resultTableView->horizontalHeader()->setStretchLastSection(true);
     resultTableView->setSortingEnabled(true);
-    resultTableView->sortByColumn(0, Qt::AscendingOrder); // 按照序列号列排序
+    resultTableView->sortByColumn(0, Qt::AscendingOrder);
+
 
     // 连接界面元素到槽函数
     finishButton = ui->finishButton;
@@ -81,12 +82,26 @@ FileSearch::FileSearch(QWidget *parent) :
 }
 
 FileSearch::~FileSearch() {
-    stopAllTasks(); // 确保析构时停止所有任务
+    stopAllTasks();
     threadPool->waitForDone();
     delete ui;
     delete taskQueue;
     delete queueMutex;
     delete queueCondition;
+}
+
+void FileSearch::resizeEvent(QResizeEvent *event)
+{
+    int availableWidth = width();
+    int availableHeight = height();
+
+    int tableWidth = availableWidth * 0.988;
+    int tableHeight = (availableHeight)  -325;
+    // 调整表格视图位置使其居于窗口中心的三分之二处
+    int tableX = (availableWidth - tableWidth) / 1.67;
+    int tableY = (availableHeight - tableHeight) / 1.67;
+
+    resultTableView->setGeometry(tableX, tableY, tableWidth, tableHeight);
 }
 
 void FileSearch::onSearchButtonClicked() {
@@ -114,14 +129,13 @@ void FileSearch::onSearchButtonClicked() {
     progressBar->setMaximum(totalDirectories);
     progressBar->setValue(0);
     updateProgressLabel();
-
     // 创建和启动任务消费者线程
     for (int i = 0; i < threadPool->maxThreadCount(); ++i) {
         FileSearchThread *task = new FileSearchThread(searchKeyword, taskQueue, queueMutex, queueCondition);
         connect(task, &FileSearchThread::fileFound, this, &FileSearch::onFileFound);
         connect(task, &FileSearchThread::searchFinished, this, &FileSearch::onSearchFinished);
+        connect(task, &FileSearchThread::taskStarted, this, &FileSearch::onTaskStarted);
         threadPool->start(task);
-        activeTaskCount++;
     }
 }
 
@@ -286,6 +300,7 @@ void FileSearch::finishSearch() {
 void FileSearch::onSearchFinished() {
     QMutexLocker locker(queueMutex);
     activeTaskCount--;
+    // Logger::instance().log("activeTaskCount 减少，当前计数: " + QString::number(activeTaskCount));
     progressBar->setValue(progressBar->value() + 1);
     updateProgressLabel();
 
@@ -346,3 +361,10 @@ void FileSearch::stopAllTasks() {
 void FileSearch::onSearchFilterChanged(const QString &text) {
     proxyModel->setFilterWildcard(text);
 }
+
+void FileSearch::onTaskStarted() {
+    QMutexLocker locker(queueMutex);
+    activeTaskCount++;
+    // Logger::instance().log("activeTaskCount 增加，当前计数: " + QString::number(activeTaskCount));
+}
+
