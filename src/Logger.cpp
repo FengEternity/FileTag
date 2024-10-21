@@ -9,7 +9,7 @@ Logger& Logger::instance() {
     return instance;
 }
 
-Logger::Logger() : logFile(generateLogFileName()), logStream(&logFile), running(true) {
+Logger::Logger() : logFile(generateLogFileName()), logStream(&logFile), running(true), currentLogLevel(LogLevel::INFO) {
     QDir logDir("logs");
     if (!logDir.exists()) {
         qDebug() << "日志目录不存在，尝试创建";
@@ -40,10 +40,23 @@ Logger::~Logger() {
     logFile.close();
 }
 
-void Logger::log(const QString &message) {
+void Logger::setLogLevel(LogLevel level) {
+    QMutexLocker locker(&mutex);
+    currentLogLevel = level;
+}
+
+void Logger::log(const QString &message, LogLevel level) {
+    if (level < currentLogLevel) {
+        return;  // 如果消息级别低于当前日志级别，则忽略该消息
+    }
+
+    QString logMessage = QString("[%1] %2")
+            .arg(logLevelToString(level))
+            .arg(message);
+
     {
         QMutexLocker locker(&mutex);
-        logQueue.enqueue(message);  // 将消息放入队列
+        logQueue.enqueue(logMessage);  // 将格式化后的消息放入队列
     }
     condition.wakeOne();  // 唤醒工作线程
 }
@@ -94,3 +107,14 @@ QString Logger::generateLogFileName() {
     QString dateString = QDate::currentDate().toString("yyyyMMdd");
     return QString("logs/application_%1.log").arg(dateString);
 }
+
+QString Logger::logLevelToString(LogLevel level) {
+    switch (level) {
+        case LogLevel::DEBUG: return "DEBUG";
+        case LogLevel::INFO: return "INFO";
+        case LogLevel::WARNING: return "WARNING";
+        case LogLevel::ERROR: return "ERROR";
+        default: return "UNKNOWN";
+    }
+}
+
