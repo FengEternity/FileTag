@@ -51,14 +51,20 @@ void Logger::log(const QString &message, LogLevel level) {
     }
 
     QString logMessage = QString("[%1] %2")
-            .arg(logLevelToString(level))
+            .arg(logLevelToString(level, false))  // 文件日志不带颜色
             .arg(message);
 
     {
         QMutexLocker locker(&mutex);
-        logQueue.enqueue(logMessage);  // 将格式化后的消息放入队列
+        logQueue.enqueue(logMessage);
     }
-    condition.wakeOne();  // 唤醒工作线程
+    condition.wakeOne();
+
+    // 控制台输出带颜色的版本
+    QString consoleMessage = QString("[%1] %2")
+            .arg(logLevelToString(level, true))  // 控制台输出带颜色
+            .arg(message);
+    QTextStream(stdout) << consoleMessage << "\n";  // 输出到标准输出
 }
 
 void Logger::run() {
@@ -108,13 +114,23 @@ QString Logger::generateLogFileName() {
     return QString("logs/application_%1.log").arg(dateString);
 }
 
-QString Logger::logLevelToString(LogLevel level) {
-    switch (level) {
-        case LogLevel::DEBUG: return "DEBUG";
-        case LogLevel::INFO: return "INFO";
-        case LogLevel::WARNING: return "WARNING";
-        case LogLevel::ERROR: return "ERROR";
-        default: return "UNKNOWN";
+QString Logger::logLevelToString(LogLevel level, bool useColor) {
+    if (useColor) {
+        switch (level) {
+            case LogLevel::DEBUG: return "\033[36mDEBUG\033[0m";   // 青色
+            case LogLevel::INFO: return "\033[37mINFO\033[0m";    // 白色
+            case LogLevel::WARNING: return "\033[33mWARNING\033[0m"; // 黄色
+            case LogLevel::ERROR: return "\033[31mERROR\033[0m";  // 红色
+            default: return "\033[37mUNKNOWN\033[0m";             // 默认白色
+        }
+    } else {
+        // 文件输出，不带颜色编码
+        switch (level) {
+            case LogLevel::DEBUG: return "DEBUG";
+            case LogLevel::INFO: return "INFO";
+            case LogLevel::WARNING: return "WARNING";
+            case LogLevel::ERROR: return "ERROR";
+            default: return "UNKNOWN";
+        }
     }
 }
-

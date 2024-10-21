@@ -35,7 +35,7 @@ private:
 
     void rotateLogFile();
     QString generateLogFileName();
-    QString logLevelToString(LogLevel level);
+    QString logLevelToString(LogLevel level, bool useColor = false);
 
     QFile logFile;
     QTextStream logStream;
