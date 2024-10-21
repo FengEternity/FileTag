@@ -21,7 +21,7 @@ void CustomModel::addFile(const QString &filePath) {
     fileList << filePath;
     endInsertRows();
     // qDebug() << "File added to model: " << filePath;
-    Logger::instance().log("File added to model: " + filePath);
+    // Logger::instance().log("File added to model: " + filePath);
 }
 
 void CustomModel::clear() {
@@ -29,5 +29,5 @@ void CustomModel::clear() {
     fileList.clear();
     endResetModel();
     // qDebug() << "Model cleared.";
-    Logger::instance().log("Model cleared.");
+    // Logger::instance().log("Model cleared.");
 }
