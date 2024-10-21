@@ -50,8 +50,11 @@ void Logger::log(const QString &message, LogLevel level) {
         return;  // 如果消息级别低于当前日志级别，则忽略该消息
     }
 
-    QString logMessage = QString("[%1] %2")
+    QString threadId = getCurrentThreadId();
+
+    QString logMessage = QString("[%1] [线程ID: %2] %3")
             .arg(logLevelToString(level, false))  // 文件日志不带颜色
+            .arg(threadId)
             .arg(message);
 
     {
@@ -61,8 +64,9 @@ void Logger::log(const QString &message, LogLevel level) {
     condition.wakeOne();
 
     // 控制台输出带颜色的版本
-    QString consoleMessage = QString("[%1] %2")
+    QString consoleMessage = QString("[%1] [线程ID: %2] %3")
             .arg(logLevelToString(level, true))  // 控制台输出带颜色
+            .arg(threadId)
             .arg(message);
     QTextStream(stdout) << consoleMessage << "\n";  // 输出到标准输出
 }
@@ -134,3 +138,10 @@ QString Logger::logLevelToString(LogLevel level, bool useColor) {
         }
     }
 }
+
+// 获取线程ID字符串
+QString Logger::getCurrentThreadId() {
+    return QString::number(reinterpret_cast<quintptr>(QThread::currentThreadId()), 16);
+}
+
+

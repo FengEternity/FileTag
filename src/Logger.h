@@ -22,7 +22,6 @@ class Logger : public QThread {
 public:
     static Logger& instance();
     void log(const QString &message, LogLevel level = LogLevel::INFO);
-    void setLogLevel(LogLevel level);
 
 protected:
     void run() override;  // 线程运行方法
@@ -34,6 +33,9 @@ private:
     Logger& operator=(const Logger&) = delete;
 
     void rotateLogFile();
+    void setLogLevel(LogLevel level);
+
+    QString getCurrentThreadId();
     QString generateLogFileName();
     QString logLevelToString(LogLevel level, bool useColor = false);
 
