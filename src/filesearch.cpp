@@ -105,11 +105,25 @@ void FileSearch::resizeEvent(QResizeEvent *event)
 }
 
 void FileSearch::onSearchButtonClicked() {
-    QString searchKeyword = searchLineEdit->text();
-    QString searchPath = pathLineEdit->text();
 
+    QString searchKeyword = searchLineEdit->text().trimmed();
+    QString searchPath = QDir(pathLineEdit->text().trimmed()).absolutePath();
+
+    // 输入验证
+    if (searchKeyword.isEmpty()) {
+        QMessageBox::warning(this, "输入错误", "搜索关键词不能为空。");
+        return;
+    }
+
+    // 搜索路径检查 
     if (searchPath.isEmpty()) {
         searchPath = QDir::rootPath();
+        return;
+    }
+
+    if (!QDir(searchPath).exists()) {
+        QMessageBox::warning(this, "路径错误", "指定的路径不存在，请检查输入。");
+        return;
     }
 
     tableModel->removeRows(0, tableModel->rowCount());
@@ -129,6 +143,14 @@ void FileSearch::onSearchButtonClicked() {
     progressBar->setMaximum(totalDirectories);
     progressBar->setValue(0);
     updateProgressLabel();
+
+    //如果没有任务进入队列, 则立即停止搜索
+    if (totalDirectories == 0) {
+        QMessageBox::information(this, "搜索结果", "未找倒匹配的目录或文件。");
+        isSearching = false;
+        return;
+    }
+
     // 创建和启动任务消费者线程
     for (int i = 0; i < threadPool->maxThreadCount(); ++i) {
         FileSearchThread *task = new FileSearchThread(searchKeyword, taskQueue, queueMutex, queueCondition);
