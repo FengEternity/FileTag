@@ -51,9 +51,10 @@ void Logger::setLogLevel(LogLevel level) {
 }
 
 void Logger::log(const QString &message, LogLevel level, const char* file, int line, const char* function) {
-    if (level < currentLogLevel) {
-        return;  // 如果消息级别低于当前日志级别，则忽略该消息
-    }
+
+//    if (level < currentLogLevel) {
+//        return;  // 如果消息级别低于当前日志级别，则忽略该消息
+//    }
 
     QString threadId = getCurrentThreadId();
     QString sourceInfo = QString("[%1:%2 - %3]").arg(file).arg(line).arg(function);
@@ -86,7 +87,7 @@ void Logger::log(const QString &message, LogLevel level, const char* file, int l
             .arg(identifierPart)  // 标识符部分
             .arg(message)
             .arg(sourceInfo);
-    // QTextStream(stdout) << consoleMessage << "\n";  // 输出到标准输出
+    QTextStream(stdout) << consoleMessage << "\n";  // 输出到标准输出
 }
 
 void Logger::run() {
