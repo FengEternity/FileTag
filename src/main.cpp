@@ -11,19 +11,19 @@
 void applyStyleSheet(QApplication &app) {
     QFile file(":/stylesheet.qss");
     if (!file.exists()) {
-        Logger::instance().log("未找到样式表");
+        LOG_ERROR("未找到样式表");
         // qDebug() << "未找到样式表";
         return;
     }
     if (file.open(QFile::ReadOnly | QFile::Text)) {
-        Logger::instance().log("加载样式表");
+        LOG_INFO("加载样式表");
         // qDebug() << "加载样式表";
         QTextStream stream(&file);
         QString styleSheet = stream.readAll();
         app.setStyleSheet(styleSheet);
         file.close();
     } else {
-        Logger::instance().log("无法加载样式表");
+        LOG_ERROR("无法加载样式表");
         // qDebug() << ("无法加载样式表");
     }
 }

@@ -63,6 +63,7 @@ private:
     void updateProgressLabel();
     void finishSearch();
     void stopAllTasks();
+    void onTaskStarted();
 
     bool isSearching;
     bool firstSearch;

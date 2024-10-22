@@ -63,7 +63,7 @@ FileSearch::FileSearch(QWidget *parent) :
     connect(finishButton, &QPushButton::clicked, this, &FileSearch::onFinishButtonClicked);
     connect(filterLineEdit, &QLineEdit::textChanged, this, &FileSearch::onSearchFilterChanged);
 
-    Logger::instance().log("表格视图模型设置完成。");
+    LOG_INFO("表格视图模型设置完成。");
 
     if (!layout()) {
         auto *layout = new QVBoxLayout(this);
@@ -73,7 +73,7 @@ FileSearch::FileSearch(QWidget *parent) :
     }
 
     threadPool->setMaxThreadCount(QThread::idealThreadCount());
-    Logger::instance().log("线程池初始化完成, 最大线程数: " + QString::number(threadPool->maxThreadCount()));
+    LOG_INFO("线程池初始化完成, 最大线程数: " + QString::number(threadPool->maxThreadCount()));
 
     // 初始化任务队列和相关同步机制
     taskQueue = new QQueue<QString>();
@@ -113,10 +113,10 @@ void FileSearch::onSearchButtonClicked() {
     }
 
     tableModel->removeRows(0, tableModel->rowCount());
-    Logger::instance().log("Search started for keyword: " + searchKeyword + " in path: " + searchPath);
+    // Logger::instance().log("Search started for keyword: " + searchKeyword + " in path: " + searchPath);
 
     timer.start();
-    Logger::instance().log("搜索计时开始。");
+    LOG_INFO("搜索计时开始。");
     activeTaskCount = 0;
     updateCounter = 0;
     totalDirectories = 0;
@@ -134,8 +134,8 @@ void FileSearch::onSearchButtonClicked() {
         FileSearchThread *task = new FileSearchThread(searchKeyword, taskQueue, queueMutex, queueCondition);
         connect(task, &FileSearchThread::fileFound, this, &FileSearch::onFileFound);
         connect(task, &FileSearchThread::searchFinished, this, &FileSearch::onSearchFinished);
+        connect(task, &FileSearchThread::taskStarted, this, &FileSearch::onTaskStarted);
         threadPool->start(task);
-        activeTaskCount++;
     }
 }
 
@@ -300,6 +300,7 @@ void FileSearch::finishSearch() {
 void FileSearch::onSearchFinished() {
     QMutexLocker locker(queueMutex);
     activeTaskCount--;
+    // Logger::instance().log("activeTaskCount 减少，当前计数: " + QString::number(activeTaskCount));
     progressBar->setValue(progressBar->value() + 1);
     updateProgressLabel();
 
@@ -323,12 +324,12 @@ void FileSearch::onSearchTime(qint64 elapsedTime) {
         QMessageBox::information(this, "搜索完成", QString("搜索耗时: %1 毫秒").arg(elapsedTime));
     }
     timer.invalidate();
-    Logger::instance().log(QString("计时结束，搜索耗时: %1 毫秒").arg(elapsedTime));
+    LOG_INFO(QString("计时结束，搜索耗时: %1 毫秒").arg(elapsedTime));
 }
 
 void FileSearch::onFinishButtonClicked() {
     if (!isSearching) {
-        Logger::instance().log("没有正在执行的搜索任务。");
+        LOG_ERROR("没有正在执行的搜索任务。");
         QMessageBox::information(this, "搜索中断", "没有正在执行的搜索任务。");
         return;
     }
@@ -339,7 +340,7 @@ void FileSearch::onFinishButtonClicked() {
         QMessageBox::information(this, "搜索中断", QString("搜索线程被中断，已耗时: %1 毫秒").arg(elapsedTime));
     }
     timer.invalidate();
-    Logger::instance().log(QString("搜索线程被中断，已耗时: %1 毫秒").arg(elapsedTime));
+    LOG_INFO(QString("搜索线程被中断，已耗时: %1 毫秒").arg(elapsedTime));
 
     finishSearch();
 
@@ -360,3 +361,10 @@ void FileSearch::stopAllTasks() {
 void FileSearch::onSearchFilterChanged(const QString &text) {
     proxyModel->setFilterWildcard(text);
 }
+
+void FileSearch::onTaskStarted() {
+    QMutexLocker locker(queueMutex);
+    activeTaskCount++;
+    // Logger::instance().log("activeTaskCount 增加，当前计数: " + QString::number(activeTaskCount));
+}
+
