@@ -329,7 +329,7 @@ void FileSearch::onSearchTime(qint64 elapsedTime) {
 
 void FileSearch::onFinishButtonClicked() {
     if (!isSearching) {
-        LOG_INFO("没有正在执行的搜索任务。");
+        LOG_ERROR("没有正在执行的搜索任务。");
         QMessageBox::information(this, "搜索中断", "没有正在执行的搜索任务。");
         return;
     }
