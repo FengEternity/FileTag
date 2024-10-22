@@ -35,7 +35,7 @@ FileSearch::FileSearch(QWidget *parent) :
     searchLineEdit = ui->searchLineEdit;
     pathLineEdit = ui->pathLineEdit;
     filterLineEdit = ui->filterLineEdit;
-    resultTableView = new QTableView(this);
+    resultTableView = ui->resultTableView;
     // 设置表格视图模型
     tableModel = new QStandardItemModel(this);
     tableModel->setHorizontalHeaderLabels({"序号", "文件名", "文件路径", "文件类型", "创建时间", "修改时间"});
@@ -90,19 +90,7 @@ FileSearch::~FileSearch() {
     delete queueCondition;
 }
 
-void FileSearch::resizeEvent(QResizeEvent *event)
-{
-    int availableWidth = width();
-    int availableHeight = height();
 
-    int tableWidth = availableWidth * 0.988;
-    int tableHeight = (availableHeight)  -325;
-    // 调整表格视图位置使其居于窗口中心的三分之二处
-    int tableX = (availableWidth - tableWidth) / 1.67;
-    int tableY = (availableHeight - tableHeight) / 1.67;
-
-    resultTableView->setGeometry(tableX, tableY, tableWidth, tableHeight);
-}
 
 void FileSearch::onSearchButtonClicked() {
     QString searchKeyword = searchLineEdit->text();
