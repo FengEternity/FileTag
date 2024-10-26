@@ -106,7 +106,6 @@ void FileSearch::onSearchButtonClicked() {
     // 搜索路径检查 
     if (searchPath.isEmpty()) {
         searchPath = QDir::rootPath();
-        return;
     }
 
     if (!QDir(searchPath).exists()) {
