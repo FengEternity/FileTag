@@ -120,7 +120,7 @@ void MainWindow::onAddTagClicked() {
     if (!filePath.isEmpty() && !tag.isEmpty()) {
         fileTagSystem.addTags(filePath.toStdString(), tag.toStdString());
         QMessageBox::information(this, "标签已添加", "标签已添加到文件: " + filePath);
-        Logger::instance().log("标签已添加到文件: " + filePath);
+        LOG_INFO("标签已添加到文件: " + filePath);
         populateTags();
     }
 }
@@ -145,7 +145,7 @@ void MainWindow::onRemoveTagClicked() {
         std::vector<std::string> files = fileTagSystem.searchFilesByTag(tag.toStdString());
         if (files.empty()) {
             QMessageBox::information(this, "无文件", "没有文件包含此标签。");
-            Logger::instance().log("没有文件包含此标签。");
+            LOG_INFO("没有文件包含此标签。");
             return;
         }
         QStringList fileList;
@@ -160,13 +160,13 @@ void MainWindow::onRemoveTagClicked() {
                     fileTagSystem.removeTag(file, tag.toStdString());
                 }
                 QMessageBox::information(this, "标签已删除", "标签已从所有文件删除。");
-                Logger::instance().log("标签已从所有文件删除。");
+                LOG_INFO("标签已从所有文件删除。");
             } else {
                 for (const auto &selectedFile : selectedFiles) {
                     fileTagSystem.removeTag(selectedFile.toStdString(), tag.toStdString());
                 }
                 QMessageBox::information(this, "标签已删除", "标签已从选中的文件中删除。");
-                Logger::instance().log("标签已从选中的文件中删除。");
+                LOG_INFO("标签已从选中的文件中删除。");
             }
             populateTags();
         }
@@ -182,7 +182,7 @@ void MainWindow::onUpdateTagClicked() {
     if (!filePath.isEmpty() && !oldTag.isEmpty() && !newTag.isEmpty()) {
         fileTagSystem.updateTag(filePath.toStdString(), oldTag.toStdString(), newTag.toStdString());
         QMessageBox::information(this, "标签已更新", "文件中的标签已更新: " + filePath);
-        Logger::instance().log("文件中的标签已更新: " + filePath);
+        LOG_INFO("文件中的标签已更新: " + filePath);
         populateTags();
     }
 }
@@ -212,13 +212,13 @@ void MainWindow::populateTags() {
 
 // 显示文件列表
 void MainWindow::displayFiles(const QStringList &filepaths) {
-    Logger::instance().log("displayFiles 调用参数：" + filepaths.join(", "));
+    LOG_INFO("displayFiles 调用参数：" + filepaths.join(", "));
 
     if (filepaths.isEmpty()) {
         QStringListModel *emptyModel = new QStringListModel(this);
         ui->fileView->setModel(emptyModel);
         ui->fileView->setRootIndex(QModelIndex());
-        Logger::instance().log("视图已清除");
+        LOG_INFO("视图已清除");
         return;
     }
     QFileInfo firstFile(filepaths.first());
@@ -227,13 +227,13 @@ void MainWindow::displayFiles(const QStringList &filepaths) {
     ui->fileView->setModel(fileModel);
     fileModel->setRootPath(directory);
     ui->fileView->setRootIndex(fileModel->index(directory));
-    Logger::instance().log("设置根目录为：" + directory);
+    LOG_INFO("设置根目录为：" + directory);
 
     QStringList nameFilters;
     for (const QString &filePath : filepaths) {
         QFileInfo fileInfo(filePath);
         nameFilters << fileInfo.fileName();
-        Logger::instance().log("添加过滤文件：" + fileInfo.fileName());
+        LOG_INFO("添加过滤文件：" + fileInfo.fileName());
     }
     fileModel->setNameFilters(nameFilters);
     fileModel->setNameFilterDisables(false);
@@ -245,7 +245,7 @@ void MainWindow::displayFiles(const QStringList &filepaths) {
         if (fileName.length() > 20) {
             QString shortName = fileName.left(17) + "...";
             fileModel->setData(index, shortName, Qt::DisplayRole);
-            Logger::instance().log("截断文件名：" + fileName + "为：" + shortName);
+            LOG_INFO("截断文件名：" + fileName + "为：" + shortName);
         }
     }
     ui->fileView->update();
