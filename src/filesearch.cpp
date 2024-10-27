@@ -96,8 +96,19 @@ void FileSearch::onSearchButtonClicked() {
     QString searchKeyword = searchLineEdit->text();
     QString searchPath = pathLineEdit->text();
 
+    if (searchKeyword.isEmpty()) {
+        QMessageBox::information(this, "搜索关键字为空", "请输入搜索关键字。");
+        return;
+    }
+
     if (searchPath.isEmpty()) {
         searchPath = QDir::rootPath();
+    } else {
+        QDir dir(searchPath);
+        if (!dir.exists()) {
+            QMessageBox::information(this, "路径错误", "指定的路径不存在，请重新输入。");
+            return;
+        }
     }
 
     tableModel->removeRows(0, tableModel->rowCount());
