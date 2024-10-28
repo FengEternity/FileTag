@@ -3,6 +3,11 @@
 #include <QSettings>
 #include <QScreen>
 #include <QTimer>
+#include <QDir>
+#include <QTextStream>
+#include <QIcon>
+#include <QSqlDatabase>
+#include <QSqlError>
 #include "mainwindow.h"
 #include "Logger.h"
 #include "about.h"
@@ -12,26 +17,36 @@ void applyStyleSheet(QApplication &app) {
     QFile file(":/stylesheet.qss");
     if (!file.exists()) {
         LOG_ERROR("未找到样式表");
-        // qDebug() << "未找到样式表";
         return;
     }
     if (file.open(QFile::ReadOnly | QFile::Text)) {
         LOG_INFO("加载样式表");
-        // qDebug() << "加载样式表";
         QTextStream stream(&file);
         QString styleSheet = stream.readAll();
         app.setStyleSheet(styleSheet);
         file.close();
     } else {
         LOG_ERROR("无法加载样式表");
-        // qDebug() << ("无法加载样式表");
     }
 }
 
 int main(int argc, char *argv[]) {
-    QApplication app(argc, argv);
-    applyStyleSheet(app);
+    // 设置插件路径以确保加载 SQLite 驱动
+    QString pluginPath = "/opt/homebrew/Cellar/qt/6.7.0_1/share/qt/plugins";
+    QCoreApplication::addLibraryPath(pluginPath);
+    qDebug() << "插件路径：" << QCoreApplication::libraryPaths();
 
+    QApplication app(argc, argv);
+
+    // 测试 SQLite 驱动是否可用
+    if (!QSqlDatabase::isDriverAvailable("QSQLITE")) {
+        LOG_ERROR("SQLite 驱动不可用。请检查插件路径和 Qt 安装。");
+        return -1;
+    } else {
+        LOG_INFO("成功加载 SQLite 驱动。");
+    }
+
+    applyStyleSheet(app);
     app.setWindowIcon(QIcon(":/logo.png")); // 确保图标路径正确
 
     MainWindow w;
@@ -41,7 +56,6 @@ int main(int argc, char *argv[]) {
     QSettings settings(settingsFile, QSettings::IniFormat);
 
     bool showAbout = settings.value("showAbout", true).toBool();
-    // qDebug() << "showAbout:" << showAbout;
 
     std::unique_ptr<About> about;
     if (showAbout) {
@@ -54,7 +68,6 @@ int main(int argc, char *argv[]) {
         about->show();
         about->raise();
         about->activateWindow();
-        // qDebug() << "About window shown";
     }
 
     if (about) {
