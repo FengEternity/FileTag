@@ -5,7 +5,6 @@
 #include <QWidget>
 #include <QLineEdit>
 #include <QTableView>
-
 #include <QPushButton>
 #include <QThreadPool>
 #include <QElapsedTimer>
@@ -18,7 +17,9 @@
 #include <QMutex>
 #include <QWaitCondition>
 #include <QSet>
+
 #include "FileSearchThread.h"
+#include "FileDatabase.h"
 
 namespace Ui {
     class FileSearch;
@@ -78,6 +79,9 @@ private:
     QWaitCondition *queueCondition;
 
     void enqueueDirectories(const QString &path, int depth); // 新增方法声明
+    QVector<QString> extractKeywordsFromFile(const QString &filePath);  // 声明提取关键词的方法
+
+    FileDatabase *db;
 };
 
 #endif // FILESEARCH_H

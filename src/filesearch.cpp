@@ -24,8 +24,8 @@ FileSearch::FileSearch(QWidget *parent) :
         activeTaskCount(0),
         totalDirectories(0),
         isSearching(false),
-        firstSearch(true)
-
+        firstSearch(true),
+        db(new FileDatabase("file_index.db"))
 {
     // 设置 UI
     ui->setupUi(this);
@@ -79,11 +79,26 @@ FileSearch::FileSearch(QWidget *parent) :
     taskQueue = new QQueue<QString>();
     queueMutex = new QMutex();
     queueCondition = new QWaitCondition();
+    LOG_INFO("任务队列和同步机制初始化完成。");
+
+    // 初始化数据库并创建表
+    if (db->openDatabase()) {
+        LOG_INFO("数据库打开成功。");
+        if (db->createTables()) {
+            LOG_INFO("数据库表创建成功。");
+        } else {
+            LOG_ERROR("数据库表创建失败。");
+        }
+    } else {
+        LOG_ERROR("数据库打开失败。");
+    }
 }
 
 FileSearch::~FileSearch() {
     stopAllTasks();
     threadPool->waitForDone();
+    db->closeDatabase();
+    delete db;
     delete ui;
     delete taskQueue;
     delete queueMutex;
@@ -112,8 +127,6 @@ void FileSearch::onSearchButtonClicked() {
     }
 
     tableModel->removeRows(0, tableModel->rowCount());
-    // Logger::instance().log("Search started for keyword: " + searchKeyword + " in path: " + searchPath);
-
     timer.start();
     LOG_INFO("搜索计时开始。");
     activeTaskCount = 0;
@@ -121,22 +134,34 @@ void FileSearch::onSearchButtonClicked() {
     totalDirectories = 0;
     isSearching = true;
 
-    uniquePaths.clear();
-    uniqueFiles.clear();
-    enqueueDirectories(searchPath, 2); // 调用新方法
+    // 使用数据库进行搜索
+    QVector<QString> results = db->searchFiles(searchKeyword);
 
-    progressBar->setMaximum(totalDirectories);
-    progressBar->setValue(0);
-    updateProgressLabel();
-    // 创建和启动任务消费者线程
-    for (int i = 0; i < threadPool->maxThreadCount(); ++i) {
-        FileSearchThread *task = new FileSearchThread(searchKeyword, taskQueue, queueMutex, queueCondition);
-        connect(task, &FileSearchThread::fileFound, this, &FileSearch::onFileFound);
-        connect(task, &FileSearchThread::searchFinished, this, &FileSearch::onSearchFinished);
-        connect(task, &FileSearchThread::taskStarted, this, &FileSearch::onTaskStarted);
-        threadPool->start(task);
+    if (!results.isEmpty()) {
+        for (const QString &filePath : results) {
+            onFileFound(filePath);  // 利用已有逻辑来显示搜索结果
+        }
+    } else {
+        LOG_INFO("没有找到符合条件的文件，进行文件系统遍历搜索。");
+        // 如果数据库中没有结果，则进行文件系统遍历搜索
+        uniquePaths.clear();
+        uniqueFiles.clear();
+        enqueueDirectories(searchPath, 2);
+
+        progressBar->setMaximum(totalDirectories);
+        progressBar->setValue(0);
+        updateProgressLabel();
+
+        for (int i = 0; i < threadPool->maxThreadCount(); ++i) {
+            FileSearchThread *task = new FileSearchThread(searchKeyword, taskQueue, queueMutex, queueCondition);
+            connect(task, &FileSearchThread::fileFound, this, &FileSearch::onFileFound);
+            connect(task, &FileSearchThread::searchFinished, this, &FileSearch::onSearchFinished);
+            connect(task, &FileSearchThread::taskStarted, this, &FileSearch::onTaskStarted);
+            threadPool->start(task);
+        }
     }
 }
+
 
 void FileSearch::enqueueDirectories(const QString &path, int depth) {
     QDirIterator dirIt(path, QDir::Dirs | QDir::NoDotAndDotDot, QDirIterator::NoIteratorFlags);
@@ -168,6 +193,18 @@ void FileSearch::onFileFound(const QString &filePath) {
     if (!uniqueFiles.contains(filePath)) {
         uniqueFiles.insert(filePath);
         filesBatch.append(filePath);
+
+        // 插入文件信息到数据库
+        if(db->insertFileInfo(filePath)) {
+            int fileId = db->getFileId(filePath);
+            if(fileId > 0) {
+                // 插入文件关键词到数据库
+                QVector<QString> keywords = extractKeywordsFromFile(filePath); // 提取关键词
+                db->insertFileKeywords(fileId, keywords);
+            } else {
+                LOG_ERROR("获取文件 ID 失败: " + filePath);
+            }
+        }
 
         // 如果文件数目不足500，则直接更新
         if (firstSearch || filesBatch.size() < 500) {
@@ -367,3 +404,36 @@ void FileSearch::onTaskStarted() {
     // Logger::instance().log("activeTaskCount 增加，当前计数: " + QString::number(activeTaskCount));
 }
 
+QVector<QString> FileSearch::extractKeywordsFromFile(const QString &filePath) {
+    QVector<QString> keywords;
+    QFile file(filePath);
+
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qDebug() << "无法打开文件进行关键词提取:" << filePath;
+        return keywords;
+    }
+
+    QTextStream in(&file);
+    QString content = in.readAll();
+    file.close();
+
+    // 使用正则表达式匹配所有单词
+    QRegularExpression wordRegex("\\b\\w+\\b");
+    QRegularExpressionMatchIterator it = wordRegex.globalMatch(content.toLower());
+
+    // 停用词列表（可以根据需要添加更多停用词）
+    QSet<QString> stopwords = {"the", "and", "is", "in", "to", "of", "a", "an"};
+
+    // 提取并过滤关键词
+    while (it.hasNext()) {
+        QRegularExpressionMatch match = it.next();
+        QString word = match.captured(0);
+
+        // 过滤掉长度小于等于2的词和停用词
+        if (word.length() > 2 && !stopwords.contains(word)) {
+            keywords.append(word);
+        }
+    }
+
+    return keywords;
+}
