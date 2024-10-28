@@ -87,7 +87,7 @@ void Logger::log(const QString &message, LogLevel level, const char* file, int l
             .arg(identifierPart)  // 标识符部分
             .arg(message)
             .arg(sourceInfo);
-    QTextStream(stdout) << consoleMessage << "\n";  // 输出到标准输出
+    // QTextStream(stdout) << consoleMessage << "\n";  // 输出到标准输出
 }
 
 void Logger::run() {
