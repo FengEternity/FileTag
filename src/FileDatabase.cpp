@@ -84,8 +84,8 @@ bool FileDatabase::createTables() {
         return false;
     }
 
-    LOG_INFO("数据库表创建成功。");
-    qDebug() << "数据库表创建成功。";
+    //LOG_INFO("数据库表创建成功。");
+    //qDebug() << "数据库表创建成功。";
     return true;
 }
 
@@ -115,8 +115,8 @@ bool FileDatabase::insertFileInfo(const QString &filePath) {
         return false;
     }
 
-    LOG_INFO("文件信息插入成功：" + filePath);
-    qDebug() << "文件信息插入成功: " << filePath;
+    //LOG_INFO("文件信息插入成功：" + filePath);
+    //qDebug() << "文件信息插入成功: " << filePath;
     return true;
 }
 
@@ -141,8 +141,8 @@ void FileDatabase::insertFileKeywords(int fileId, const QVector<QString> &keywor
             qDebug() << errorMessage;
             LOG_ERROR(errorMessage);
         } else {
-            LOG_INFO("关键词插入成功，文件 ID: " + QString::number(fileId) + ", 关键词: " + keyword);
-            qDebug() << "关键词插入成功，文件 ID: " << fileId << ", 关键词: " << keyword;
+            //LOG_INFO("关键词插入成功，文件 ID: " + QString::number(fileId) + ", 关键词: " + keyword);
+            //qDebug() << "关键词插入成功，文件 ID: " << fileId << ", 关键词: " << keyword;
         }
     }
 }
