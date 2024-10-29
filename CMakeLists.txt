@@ -26,7 +26,7 @@ add_executable(FileTag
         src/MultiSelectDialog.cpp
         src/Logger.cpp
         src/FileProcessor.cpp
-        src/filesearch.cpp
+        src/FileSearch.cpp
         src/file_tag_system.h
         src/tag_manager.h
         src/user_manager.h
