@@ -406,20 +406,12 @@ void FileSearch::onTaskStarted() {
 
 QVector<QString> FileSearch::extractKeywordsFromFile(const QString &filePath) {
     QVector<QString> keywords;
-    QFile file(filePath);
 
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qDebug() << "无法打开文件进行关键词提取:" << filePath;
-        return keywords;
-    }
-
-    QTextStream in(&file);
-    QString content = in.readAll();
-    file.close();
+    QString filename = QFileInfo(filePath).fileName();
 
     // 使用正则表达式匹配所有单词
     QRegularExpression wordRegex("\\b\\w+\\b");
-    QRegularExpressionMatchIterator it = wordRegex.globalMatch(content.toLower());
+    QRegularExpressionMatchIterator it = wordRegex.globalMatch(filename.toLower());
 
     // 停用词列表（可以根据需要添加更多停用词）
     QSet<QString> stopwords = {"the", "and", "is", "in", "to", "of", "a", "an"};
