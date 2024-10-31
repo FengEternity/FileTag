@@ -9,7 +9,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 # 查找 Qt6 包，并指定插件路径
-set(CMAKE_PREFIX_PATH "/opt/homebrew/Cellar/qt/6.7.0_1/lib/cmake")
+set(CMAKE_PREFIX_PATH "/opt/homebrew/Cellar/qt/6.7.2/lib/cmake")
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Network Sql)
 
 # 添加 Qt6 模块
@@ -46,6 +46,7 @@ add_executable(FileTag
         src/about.ui
         src/FileDatabase.cpp
         src/FileDatabase.h
+        src/FileTransfer.h src/FileTransfer.cpp src/FileTransfer.ui
 )
 
 # 设置包含目录
@@ -66,7 +67,7 @@ file(WRITE ${CMAKE_BINARY_DIR}/cmake_clean.cmake "file(REMOVE_RECURSE ${CMAKE_BI
 # 将 qt.conf 配置文件安装到可执行文件目录中，以便 Qt 能够找到插件
 file(WRITE ${CMAKE_BINARY_DIR}/qt.conf
         "[Paths]\n"
-        "Plugins = /opt/homebrew/Cellar/qt/6.7.0_1/share/qt/plugins\n"
+        "Plugins = /opt/homebrew/Cellar/qt/6.7.2/share/qt/plugins\n"
 )
 
 # 复制 qt.conf 到构建目录和目标目录中
@@ -79,6 +80,6 @@ add_custom_command(TARGET FileTag POST_BUILD
 # 将 Qt 的 sqldrivers 目录复制到可执行文件所在的目录
 add_custom_command(TARGET FileTag POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "/opt/homebrew/Cellar/qt/6.7.0_1/share/qt/plugins/sqldrivers"
+        "/opt/homebrew/Cellar/qt/6.7.2/share/qt/plugins/sqldrivers"
         "$<TARGET_FILE_DIR:FileTag>/sqldrivers"
 )
