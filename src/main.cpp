@@ -8,10 +8,12 @@
 #include <QIcon>
 #include <QSqlDatabase>
 #include <QSqlError>
+#include <QDebug>
+
 #include "mainwindow.h"
 #include "Logger.h"
 #include "about.h"
-#include <QDebug>
+#include "FileSearch.h"
 
 void applyStyleSheet(QApplication &app) {
     QFile file(":/stylesheet.qss");

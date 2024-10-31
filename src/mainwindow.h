@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QFileSystemModel>
+
 #include "FileTagSystem.h"
 
 QT_BEGIN_NAMESPACE
