@@ -25,7 +25,8 @@ FileSearch::FileSearch(QWidget *parent) :
         totalDirectories(0),
         isSearching(false),
         firstSearch(true),
-        db(new FileDatabase("file_index.db"))
+        db(new FileDatabase("file_index.db")),
+        dbThread(new DatabaseThread(db, this))
 {
     // 设置 UI
     ui->setupUi(this);
@@ -92,6 +93,9 @@ FileSearch::FileSearch(QWidget *parent) :
     } else {
         LOG_ERROR("数据库打开失败。");
     }
+
+    connect(dbThread, &DatabaseThread::fileInserted, this, &FileSearch::onFileInserted);
+    connect(dbThread, &DatabaseThread::searchFinished, this, &FileSearch::onSearchFinished);
 }
 
 FileSearch::~FileSearch() {
@@ -195,16 +199,18 @@ void FileSearch::onFileFound(const QString &filePath) {
         filesBatch.append(filePath);
 
         // 插入文件信息到数据库
-        if(db->insertFileInfo(filePath)) {
-            int fileId = db->getFileId(filePath);
-            if(fileId > 0) {
-                // 插入文件关键词到数据库
-                QVector<QString> keywords = extractKeywordsFromFile(filePath); // 提取关键词
-                db->insertFileKeywords(fileId, keywords);
-            } else {
-                LOG_ERROR("获取文件 ID 失败: " + filePath);
-            }
-        }
+        dbThread->insertFileInfo(filePath);
+
+//        if(db->insertFileInfo(filePath)) {
+//            int fileId = db->getFileId(filePath);
+//            if(fileId > 0) {
+//                // 插入文件关键词到数据库
+//                QVector<QString> keywords = extractKeywordsFromFile(filePath); // 提取关键词
+//                db->insertFileKeywords(fileId, keywords);
+//            } else {
+//                LOG_ERROR("获取文件 ID 失败: " + filePath);
+//            }
+//        }
 
         // 如果文件数目不足500，则直接更新
         if (firstSearch || filesBatch.size() < 500) {
@@ -428,4 +434,8 @@ QVector<QString> FileSearch::extractKeywordsFromFile(const QString &filePath) {
     }
 
     return keywords;
+}
+
+void FileSearch::onFileInserted(const QString &filePath) {
+
 }

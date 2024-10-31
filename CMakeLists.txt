@@ -46,6 +46,8 @@ add_executable(FileTag
         src/about.ui
         src/FileDatabase.cpp
         src/FileDatabase.h
+        src/DatabaseThread.h
+        src/DatabaseThread.cpp
 )
 
 # 设置包含目录
