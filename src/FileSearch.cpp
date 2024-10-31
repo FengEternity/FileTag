@@ -112,6 +112,14 @@ FileSearch::~FileSearch() {
 
 
 void FileSearch::onSearchButtonClicked() {
+    if(!uniqueFiles.isEmpty()){
+        uniqueFiles.clear();
+    }
+
+    if(!uniquePaths.isEmpty()){
+        uniquePaths.clear();
+    }
+
     QString searchKeyword = searchLineEdit->text();
     QString searchPath = pathLineEdit->text();
 
