@@ -96,6 +96,8 @@ FileSearch::FileSearch(QWidget *parent) :
 
     connect(dbThread, &DatabaseThread::fileInserted, this, &FileSearch::onFileInserted);
     connect(dbThread, &DatabaseThread::searchFinished, this, &FileSearch::onSearchFinished);
+
+    initFileDatabase();
 }
 
 FileSearch::~FileSearch() {
@@ -446,4 +448,30 @@ QVector<QString> FileSearch::extractKeywordsFromFile(const QString &filePath) {
 
 void FileSearch::onFileInserted(const QString &filePath) {
 
+}
+
+void FileSearch::initFileDatabase() {
+    QString rootPath = QDir::rootPath();
+
+    // 清空已处理路径和文件的记录
+    uniqueFiles.clear();
+    uniquePaths.clear();
+
+    // 遍历文件夹并建立索引
+    enqueueDirectories(rootPath, 2); // 加入任务队列
+    totalDirectories = taskQueue->size();
+
+    // 只在后台运行数据库插入逻辑，避免更新UI
+    for (int i = 0; i < threadPool->maxThreadCount(); ++i) {
+        FileSearchThread *task = new FileSearchThread("", taskQueue, queueMutex, queueCondition);
+        connect(task, &FileSearchThread::fileFound, this, [this](const QString &filePath) {
+            if (!uniqueFiles.contains(filePath)) {
+                uniqueFiles.insert(filePath);
+                // 插入文件信息到数据库而不更新UI
+                dbThread->insertFileInfo(filePath);
+            }
+        });
+        threadPool->start(task);
+    }
+    LOG_INFO("文件索引数据库建立启动完成。");
 }

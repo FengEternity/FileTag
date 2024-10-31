@@ -66,6 +66,7 @@ private:
     void finishSearch();
     void stopAllTasks();
     void onTaskStarted();
+    void initFileDatabase();
 
     bool isSearching;
     bool firstSearch;
