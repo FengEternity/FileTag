@@ -3,7 +3,7 @@
 
 #include <QMainWindow>
 #include <QFileSystemModel>
-#include "file_tag_system.h"
+#include "FileTagSystem.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
