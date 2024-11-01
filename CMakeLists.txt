@@ -52,6 +52,9 @@ add_executable(FileTag
         src/FileSearchCore.cpp
         src/AbstractDatabase.h
         src/AbstractDatabase.cpp
+        src/FileTransfer.h
+        src/FileTransfer.cpp
+        src/FileTransfer.ui
 )
 
 # 设置包含目录
