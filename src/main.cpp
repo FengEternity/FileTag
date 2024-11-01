@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
     }
 
     FileSearchCore* searchCore = new FileSearchCore(nullptr);
-    searchCore->initFileDatabase();
+    //searchCore->initFileDatabase();
 
     return app.exec();
 }
