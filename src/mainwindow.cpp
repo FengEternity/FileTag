@@ -1,8 +1,3 @@
-#include "mainwindow.h"
-#include "ui_mainwindow.h"
-#include "MultiSelectDialog.h"
-#include "FileSearch.h"
-#include "Logger.h"
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QFileDialog>
@@ -12,6 +7,13 @@
 #include <QPixmap>
 #include <QCloseEvent>
 #include <QStringListModel>
+
+#include "mainwindow.h"
+#include "ui_mainwindow.h"
+#include "MultiSelectDialog.h"
+#include "FileSearch.h"
+#include "Logger.h"
+#include "FileTransfer.h"
 
 MainWindow::MainWindow(QWidget *parent)
         : QMainWindow(parent),
@@ -100,8 +102,47 @@ void MainWindow::onFileSearchClicked() {
 
 // 文件传输按钮点击事件处理
 void MainWindow::onFileTransferClicked() {
-    // 文件传输功能的空实现
+    QWidget *currentCentralWidget = takeCentralWidget();
+    if (currentCentralWidget && currentCentralWidget!= homeWidget) {
+        delete currentCentralWidget;
+    }
+
+    FileTransfer *fileTransfer = new FileTransfer(this);
+
+    // 连接文件传输对话框中的信号到MainWindow中的槽函数（假设FileTransfer类中有相关信号）
+    connect(fileTransfer, &FileTransfer::fileSelected, this, &MainWindow::onFileSelectedInTransfer);
+    connect(fileTransfer, &FileTransfer::fileTransferProgress, this, &MainWindow::onFileTransferProgress);
+    connect(fileTransfer, &FileTransfer::fileTransferFinished, this, &MainWindow::onFileTransferFinished);
+
+    setCentralWidget(fileTransfer);
 }
+
+// 当在文件传输对话框中选择文件完成后调用此槽函数
+void MainWindow::onFileSelectedInTransfer(const QString& filePath) {
+    // 可以在这里进行一些与选择文件完成相关的操作，比如在界面上显示选择的文件路径等
+    qDebug() << "在文件传输对话框中选择的文件路径为：" << filePath;
+}
+
+// 当文件传输过程中有进度更新时调用此槽函数
+void MainWindow::onFileTransferProgress(qint64 bytesSent, qint64 totalBytes) {
+    // 计算传输进度百分比
+    double progress = static_cast<double>(bytesSent) / static_cast<double>(totalBytes) * 100.0;
+
+    // 可以在这里进行一些与更新传输进度相关的操作，比如在界面上更新进度条的值等
+    qDebug() << "文件传输进度：" << progress << "%";
+}
+
+// 当文件传输完成后调用此槽函数
+void MainWindow::onFileTransferFinished(bool success) {
+    if (success) {
+        qDebug() << "文件传输成功！";
+        // 可以在这里进行一些与文件传输成功相关的操作，比如弹出提示框告知用户等
+    } else {
+        qDebug() << "文件传输失败！";
+        // 可以在这里进行一些与文件传输失败相关的操作，比如弹出错误提示框告知用户失败原因等
+    }
+}
+
 
 // 初始化视图
 void MainWindow::initializeView() {

@@ -18,18 +18,18 @@ set(QT_LIBRARIES Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Network Qt6::Sql)
 # 将所有源文件和头文件添加到可执行文件 FileTag 中
 add_executable(FileTag
         src/main.cpp
-        src/file_tag_system.cpp
-        src/tag_manager.cpp
-        src/user_manager.cpp
+        src/FileTagSystem.cpp
+        src/TagManager.cpp
+        src/UserManager.cpp
         src/mainwindow.cpp
         src/mainwindow.ui
         src/MultiSelectDialog.cpp
         src/Logger.cpp
         src/FileProcessor.cpp
         src/FileSearch.cpp
-        src/file_tag_system.h
-        src/tag_manager.h
-        src/user_manager.h
+        src/FileTagSystem.h
+        src/TagManager.h
+        src/UserManager.h
         src/mainwindow.h
         src/MultiSelectDialog.h
         src/Logger.h
@@ -46,6 +46,11 @@ add_executable(FileTag
         src/about.ui
         src/FileDatabase.cpp
         src/FileDatabase.h
+        src/DatabaseThread.h
+        src/DatabaseThread.cpp
+        src/FileTransfer.h
+        src/FileTransfer.cpp
+        src/FileTransfer.ui
 )
 
 # 设置包含目录

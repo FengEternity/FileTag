@@ -8,10 +8,12 @@
 #include <QIcon>
 #include <QSqlDatabase>
 #include <QSqlError>
+#include <QDebug>
+
 #include "mainwindow.h"
 #include "Logger.h"
 #include "about.h"
-#include <QDebug>
+#include "FileSearch.h"
 
 void applyStyleSheet(QApplication &app) {
     QFile file(":/stylesheet.qss");
@@ -32,7 +34,7 @@ void applyStyleSheet(QApplication &app) {
 
 int main(int argc, char *argv[]) {
     // 设置插件路径以确保加载 SQLite 驱动
-    QString pluginPath = "/opt/homebrew/Cellar/qt/6.7.0_1/share/qt/plugins";
+    QString pluginPath = "/opt/homebrew/Cellar/qt/6.7.2/share/qt/plugins";
     QCoreApplication::addLibraryPath(pluginPath);
     qDebug() << "插件路径：" << QCoreApplication::libraryPaths();
 

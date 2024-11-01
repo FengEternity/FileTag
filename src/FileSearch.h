@@ -20,6 +20,7 @@
 
 #include "FileSearchThread.h"
 #include "FileDatabase.h"
+#include "DatabaseThread.h"
 
 namespace Ui {
     class FileSearch;
@@ -38,6 +39,8 @@ private slots:
     void onSearchFinished();
     void onFinishButtonClicked();
     void onSearchFilterChanged(const QString &text);
+    void onFileInserted(const QString &filePath);
+    // void onSearchFinished(const QVector<QString> &result);
 
 
 private:
@@ -63,6 +66,7 @@ private:
     void finishSearch();
     void stopAllTasks();
     void onTaskStarted();
+    void initFileDatabase();
 
     bool isSearching;
     bool firstSearch;
@@ -82,6 +86,7 @@ private:
     QVector<QString> extractKeywordsFromFile(const QString &filePath);  // 声明提取关键词的方法
 
     FileDatabase *db;
+    DatabaseThread *dbThread;
 };
 
 #endif // FILESEARCH_H

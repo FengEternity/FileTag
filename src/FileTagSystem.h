@@ -1,10 +1,11 @@
 #ifndef FILE_TAG_SYSTEM_H
 #define FILE_TAG_SYSTEM_H
 
-#include "tag_manager.h"
-#include "user_manager.h"
 #include <string>
 #include <vector>
+
+#include "TagManager.h"
+#include "UserManager.h"
 
 class FileTagSystem {
 public:
