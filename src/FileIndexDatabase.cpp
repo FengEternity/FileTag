@@ -1,20 +1,29 @@
-#include "FileDatabase.h"
-#include "Logger.h"
+/*
+ * FileIndexDatabase.cpp
+ * Author: Montee
+ * CreateDate: 2024-11-1
+ * Updater: Montee
+ * UpdateDate: 2024-11-1
+ * Summary: 文件索引数据库实现
+ */
+
 #include <QSqlQuery>
 #include <QSqlError>
-#include <QDebug>
+#include <QFileInfo>
 #include <QDir>
+#include <QDebug>
 
-// 构造函数：初始化数据库文件名
-FileDatabase::FileDatabase(const QString &dbName) : databaseName(dbName) {}
+#include "FileIndexDatabase.h"
+#include "Logger.h"
 
-// 析构函数：关闭数据库连接
-FileDatabase::~FileDatabase() {
+FileIndexDatabase::FileIndexDatabase(const QString &dbName) : AbstractDatabase(dbName) {}
+
+FileIndexDatabase::~FileIndexDatabase() {
     closeDatabase();
 }
 
 // 打开数据库连接并创建表
-bool FileDatabase::openDatabase() {
+bool FileIndexDatabase::openDatabase() {
     // 检查是否已经有同名的连接
     if (QSqlDatabase::contains("file_db_connection")) {
         db = QSqlDatabase::database("file_db_connection");
@@ -27,25 +36,25 @@ bool FileDatabase::openDatabase() {
         QString errorMessage = QString("无法打开数据库: %1").arg(db.lastError().text());
         qDebug() << errorMessage;
         LOG_ERROR(errorMessage);
-        return false; // 如果连接失败，返回 false
+        return false;
     }
 
     LOG_INFO("数据库连接成功：" + databaseName);
-    return createTables(); // 连接成功后，创建表
+    return createTables();
 }
 
-// 关闭数据库连接
-void FileDatabase::closeDatabase() {
+
+void FileIndexDatabase::closeDatabase() {
     if (db.isOpen()) {
-        db.close(); // 关闭数据库连接
+        db.close();
         LOG_INFO("数据库连接已关闭。");
         qDebug() << "数据库连接已关闭。";
     }
     QSqlDatabase::removeDatabase("file_db_connection");
 }
 
-// 创建表，返回是否成功
-bool FileDatabase::createTables() {
+
+bool FileIndexDatabase::createTables() {
     if (!db.isOpen()) {
         LOG_ERROR("数据库未打开，无法创建表。");
         return false;
@@ -89,8 +98,8 @@ bool FileDatabase::createTables() {
     return true;
 }
 
-// 插入文件信息，返回是否成功
-bool FileDatabase::insertFileInfo(const QString &filePath) {
+
+bool FileIndexDatabase::insertFileInfo(const QString &filePath) {
     if (!db.isOpen()) {
         LOG_ERROR("数据库未打开，无法插入文件信息。");
         return false;
@@ -115,13 +124,19 @@ bool FileDatabase::insertFileInfo(const QString &filePath) {
         return false;
     }
 
-    //LOG_INFO("文件信息插入成功：" + filePath);
-    //qDebug() << "文件信息插入成功: " << filePath;
+    // LOG_INFO("文件信息插入成功：" + filePath);
+    // qDebug() << "文件信息插入成功: " << filePath;
     return true;
 }
 
-// 插入关键词到数据库中
-void FileDatabase::insertFileKeywords(int fileId, const QVector<QString> &keywords) {
+/*
+ * Summary: 插入关键词
+ * Parameters:
+ * int fileId - 文件ID
+ * const QVector<QString> &keywords - 关键词列表
+ * Return: void
+ */
+void FileIndexDatabase::insertFileKeywords(int fileId, const QVector<QString> &keywords) {
     if (!db.isOpen()) {
         LOG_ERROR("数据库未打开，无法插入关键词。");
         return;
@@ -147,8 +162,13 @@ void FileDatabase::insertFileKeywords(int fileId, const QVector<QString> &keywor
     }
 }
 
-// 根据关键词从数据库中搜索文件路径
-QVector<QString> FileDatabase::searchFiles(const QString &keyword) {
+/*
+ * Summary: 搜索文件
+ * Parameters:
+ * const QString &keyword - 搜索关键字
+ * Return: QVector<QString> - 匹配的文件路径列表
+ */
+QVector<QString> FileIndexDatabase::searchFiles(const QString &keyword) {
     QVector<QString> resultPaths;
     if (!db.isOpen()) {
         LOG_ERROR("数据库未打开，无法搜索文件。");
@@ -187,7 +207,7 @@ QVector<QString> FileDatabase::searchFiles(const QString &keyword) {
 }
 
 // 获取文件路径对应的数据库ID
-int FileDatabase::getFileId(const QString &filePath) {
+int FileIndexDatabase::getFileId(const QString &filePath) {
     if (!db.isOpen()) {
         LOG_ERROR("数据库未打开，无法获取文件 ID。");
         return -1;

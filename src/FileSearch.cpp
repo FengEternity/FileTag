@@ -1,34 +1,33 @@
-// FileSearch.cpp
+/*
+ * FileSearch.cpp
+ * Author: Montee
+ * CreateDate: 2024-11-1
+ * Updater: Montee
+ * UpdateDate: 2024-11-1
+ * Summary: 文件搜索窗口类的实现文件
+ */
 
-#include "FileSearch.h"
-#include "ui_FileSearch.h"
-#include "Logger.h"
-#include "FileSearchThread.h"
-#include <QDir>
-#include <QDirIterator>
 #include <QVBoxLayout>
 #include <QMessageBox>
-#include <QQueue>
-#include <QMutex>
-#include <QMutexLocker>
-#include <QWaitCondition>
+#include <QDir>
+#include <QFileInfo>
+#include <QStandardItem>
 
-// 定义静态成员变量
-QVector<QString> FileSearch::filesBatch;
+#include "Logger.h"
+#include "FileSearch.h"
+#include "ui_FileSearch.h"
 
+/*
+ * Summary: 构造函数，初始化UI和成员变量
+ * Parameters:
+ * QWidget *parent - 父窗口指针，默认值为 nullptr
+ * Return: 无
+ */
 FileSearch::FileSearch(QWidget *parent) :
         QWidget(parent),
         ui(new Ui::FileSearch),
-        threadPool(new QThreadPool(this)),
-        updateCounter(0),
-        activeTaskCount(0),
-        totalDirectories(0),
-        isSearching(false),
-        firstSearch(true),
-        db(new FileDatabase("file_index.db")),
-        dbThread(new DatabaseThread(db, this))
+        searchCore(new FileSearchCore(this))
 {
-    // 设置 UI
     ui->setupUi(this);
 
     // 连接界面元素到成员变量
@@ -37,6 +36,7 @@ FileSearch::FileSearch(QWidget *parent) :
     pathLineEdit = ui->pathLineEdit;
     filterLineEdit = ui->filterLineEdit;
     resultTableView = ui->resultTableView;
+
     // 设置表格视图模型
     tableModel = new QStandardItemModel(this);
     tableModel->setHorizontalHeaderLabels({"序号", "文件名", "文件路径", "文件类型", "创建时间", "修改时间"});
@@ -53,7 +53,6 @@ FileSearch::FileSearch(QWidget *parent) :
     resultTableView->horizontalHeader()->setStretchLastSection(true);
     resultTableView->setSortingEnabled(true);
     resultTableView->sortByColumn(0, Qt::AscendingOrder);
-
 
     // 连接界面元素到槽函数
     finishButton = ui->finishButton;
@@ -73,55 +72,30 @@ FileSearch::FileSearch(QWidget *parent) :
         setLayout(layout);
     }
 
-    threadPool->setMaxThreadCount(QThread::idealThreadCount());
-    LOG_INFO("线程池初始化完成, 最大线程数: " + QString::number(threadPool->maxThreadCount()));
+    // 连接 FileSearchCore 的信号到槽函数
+    connect(searchCore, &FileSearchCore::fileFound, this, &FileSearch::onFileFound);
+    connect(searchCore, &FileSearchCore::searchFinished, this, &FileSearch::onSearchFinished);
+    connect(searchCore, &FileSearchCore::progressUpdated, this, &FileSearch::updateProgress);
 
-    // 初始化任务队列和相关同步机制
-    taskQueue = new QQueue<QString>();
-    queueMutex = new QMutex();
-    queueCondition = new QWaitCondition();
-    LOG_INFO("任务队列和同步机制初始化完成。");
-
-    // 初始化数据库并创建表
-    if (db->openDatabase()) {
-        LOG_INFO("数据库打开成功。");
-        if (db->createTables()) {
-            LOG_INFO("数据库表创建成功。");
-        } else {
-            LOG_ERROR("数据库表创建失败。");
-        }
-    } else {
-        LOG_ERROR("数据库打开失败。");
-    }
-
-    connect(dbThread, &DatabaseThread::fileInserted, this, &FileSearch::onFileInserted);
-    connect(dbThread, &DatabaseThread::searchFinished, this, &FileSearch::onSearchFinished);
-
-    initFileDatabase();
+    // 初始化文件数据库
+    // searchCore->initFileDatabase();
 }
 
+/*
+ * Summary: 析构函数，释放资源
+ * Parameters: 无
+ * Return: 无
+ */
 FileSearch::~FileSearch() {
-    stopAllTasks();
-    threadPool->waitForDone();
-    db->closeDatabase();
-    delete db;
     delete ui;
-    delete taskQueue;
-    delete queueMutex;
-    delete queueCondition;
 }
 
-
-
+/*
+ * Summary: 处理搜索按钮点击事件
+ * Parameters: 无
+ * Return: void
+ */
 void FileSearch::onSearchButtonClicked() {
-    if(!uniqueFiles.isEmpty()){
-        uniqueFiles.clear();
-    }
-
-    if(!uniquePaths.isEmpty()){
-        uniquePaths.clear();
-    }
-
     QString searchKeyword = searchLineEdit->text();
     QString searchPath = pathLineEdit->text();
 
@@ -141,337 +115,96 @@ void FileSearch::onSearchButtonClicked() {
     }
 
     tableModel->removeRows(0, tableModel->rowCount());
-    timer.start();
-    LOG_INFO("搜索计时开始。");
-    activeTaskCount = 0;
-    updateCounter = 0;
-    totalDirectories = 0;
-    isSearching = true;
 
-    // 使用数据库进行搜索
-    QVector<QString> results = db->searchFiles(searchKeyword);
-
-    if (!results.isEmpty()) {
-        for (const QString &filePath : results) {
-            onFileFound(filePath);  // 利用已有逻辑来显示搜索结果
-        }
-    } else {
-        LOG_INFO("没有找到符合条件的文件，进行文件系统遍历搜索。");
-        // 如果数据库中没有结果，则进行文件系统遍历搜索
-        uniquePaths.clear();
-        uniqueFiles.clear();
-        enqueueDirectories(searchPath, 2);
-
-        progressBar->setMaximum(totalDirectories);
-        progressBar->setValue(0);
-        updateProgressLabel();
-
-        for (int i = 0; i < threadPool->maxThreadCount(); ++i) {
-            FileSearchThread *task = new FileSearchThread(searchKeyword, taskQueue, queueMutex, queueCondition);
-            connect(task, &FileSearchThread::fileFound, this, &FileSearch::onFileFound);
-            connect(task, &FileSearchThread::searchFinished, this, &FileSearch::onSearchFinished);
-            connect(task, &FileSearchThread::taskStarted, this, &FileSearch::onTaskStarted);
-            threadPool->start(task);
-        }
-    }
+    searchCore->startSearch(searchKeyword, searchPath);
 }
 
-
-void FileSearch::enqueueDirectories(const QString &path, int depth) {
-    QDirIterator dirIt(path, QDir::Dirs | QDir::NoDotAndDotDot, QDirIterator::NoIteratorFlags);
-    while (dirIt.hasNext()) {
-        dirIt.next();
-        QString subDirPath = dirIt.filePath();
-        if (!uniquePaths.contains(subDirPath)) {
-            uniquePaths.insert(subDirPath);
-            taskQueue->enqueue(subDirPath);
-            totalDirectories++;
-
-            if (depth > 1) {
-                QDirIterator subDirIt(subDirPath, QDir::Dirs | QDir::NoDotAndDotDot, QDirIterator::NoIteratorFlags);
-                while (subDirIt.hasNext()) {
-                    subDirIt.next();
-                    QString subSubDirPath = subDirIt.filePath();
-                    if (!uniquePaths.contains(subSubDirPath)) {
-                        uniquePaths.insert(subSubDirPath);
-                        taskQueue->enqueue(subSubDirPath);
-                        totalDirectories++;
-                    }
-                }
-            }
-        }
-    }
-}
-
-void FileSearch::onFileFound(const QString &filePath) {
-    if (!uniqueFiles.contains(filePath)) {
-        uniqueFiles.insert(filePath);
-        filesBatch.append(filePath);
-
-        // 插入文件信息到数据库
-        dbThread->insertFileInfo(filePath);
-
-//        if(db->insertFileInfo(filePath)) {
-//            int fileId = db->getFileId(filePath);
-//            if(fileId > 0) {
-//                // 插入文件关键词到数据库
-//                QVector<QString> keywords = extractKeywordsFromFile(filePath); // 提取关键词
-//                db->insertFileKeywords(fileId, keywords);
-//            } else {
-//                LOG_ERROR("获取文件 ID 失败: " + filePath);
-//            }
-//        }
-
-        // 如果文件数目不足500，则直接更新
-        if (firstSearch || filesBatch.size() < 500) {
-            QVector<QString> filesBatchCopy = filesBatch;
-            filesBatch.clear();
-
-            auto updateUI = [this, filesBatchCopy]() {
-                int currentRowCount = tableModel->rowCount();
-                for (const QString &filePath : filesBatchCopy) {
-                    QFileInfo fileInfo(filePath);
-                    QList<QStandardItem *> items;
-
-                    QStandardItem *item0 = new QStandardItem(QString::number(++currentRowCount));
-                    item0->setData(currentRowCount, Qt::UserRole);
-                    items.append(item0);
-
-                    QStandardItem *item1 = new QStandardItem(fileInfo.fileName());
-                    item1->setData(fileInfo.fileName(), Qt::UserRole);
-                    items.append(item1);
-
-                    QStandardItem *item2 = new QStandardItem(fileInfo.absoluteFilePath());
-                    item2->setData(fileInfo.absoluteFilePath(), Qt::UserRole);
-                    items.append(item2);
-
-                    QStandardItem *item3 = new QStandardItem(fileInfo.suffix());
-                    item3->setData(fileInfo.suffix(), Qt::UserRole);
-                    items.append(item3);
-
-                    QStandardItem *item4 = new QStandardItem(fileInfo.birthTime().toString("yyyy-MM-dd HH:mm:ss"));
-                    item4->setData(fileInfo.birthTime(), Qt::UserRole);
-                    items.append(item4);
-
-                    QStandardItem *item5 = new QStandardItem(fileInfo.lastModified().toString("yyyy-MM-dd HH:mm:ss"));
-                    item5->setData(fileInfo.lastModified(), Qt::UserRole);
-                    items.append(item5);
-
-                    tableModel->appendRow(items);
-                }
-            };
-            QMetaObject::invokeMethod(this, updateUI, Qt::QueuedConnection);
-            firstSearch = false;
-        } else {
-            // 超过500后，每1000次更新一次
-            if (++updateCounter % 1000 == 0) {
-                QVector<QString> filesBatchCopy = filesBatch;
-                filesBatch.clear();
-
-                auto updateUI = [this, filesBatchCopy]() {
-                    int currentRowCount = tableModel->rowCount();
-                    for (const QString &filePath : filesBatchCopy) {
-                        QFileInfo fileInfo(filePath);
-                        QList<QStandardItem *> items;
-
-                        QStandardItem *item0 = new QStandardItem(QString::number(++currentRowCount));
-                        item0->setData(currentRowCount, Qt::UserRole);
-                        items.append(item0);
-
-                        QStandardItem *item1 = new QStandardItem(fileInfo.fileName());
-                        item1->setData(fileInfo.fileName(), Qt::UserRole);
-                        items.append(item1);
-
-                        QStandardItem *item2 = new QStandardItem(fileInfo.absoluteFilePath());
-                        item2->setData(fileInfo.absoluteFilePath(), Qt::UserRole);
-                        items.append(item2);
-
-                        QStandardItem *item3 = new QStandardItem(fileInfo.suffix());
-                        item3->setData(fileInfo.suffix(), Qt::UserRole);
-                        items.append(item3);
-
-                        QStandardItem *item4 = new QStandardItem(fileInfo.birthTime().toString("yyyy-MM-dd HH:mm:ss"));
-                        item4->setData(fileInfo.birthTime(), Qt::UserRole);
-                        items.append(item4);
-
-                        QStandardItem *item5 = new QStandardItem(fileInfo.lastModified().toString("yyyy-MM-dd HH:mm:ss"));
-                        item5->setData(fileInfo.lastModified(), Qt::UserRole);
-                        items.append(item5);
-
-                        tableModel->appendRow(items);
-                    }
-                };
-                QMetaObject::invokeMethod(this, updateUI, Qt::QueuedConnection);
-            }
-        }
-    }
-}
-
-void FileSearch::finishSearch() {
-    if (!filesBatch.isEmpty()) {
-        QVector<QString> filesBatchCopy = filesBatch;
-        filesBatch.clear();
-
-        auto updateUI = [this, filesBatchCopy]() {
-            int currentRowCount = tableModel->rowCount();
-            for (const QString &filePath : filesBatchCopy) {
-                QFileInfo fileInfo(filePath);
-                QList<QStandardItem *> items;
-
-                QStandardItem *item0 = new QStandardItem(QString::number(++currentRowCount));
-                item0->setData(currentRowCount, Qt::UserRole);
-                items.append(item0);
-
-                QStandardItem *item1 = new QStandardItem(fileInfo.fileName());
-                item1->setData(fileInfo.fileName(), Qt::UserRole);
-                items.append(item1);
-
-                QStandardItem *item2 = new QStandardItem(fileInfo.absoluteFilePath());
-                item2->setData(fileInfo.absoluteFilePath(), Qt::UserRole);
-                items.append(item2);
-
-                QStandardItem *item3 = new QStandardItem(fileInfo.suffix());
-                item3->setData(fileInfo.suffix(), Qt::UserRole);
-                items.append(item3);
-
-                QStandardItem *item4 = new QStandardItem(fileInfo.birthTime().toString("yyyy-MM-dd HH:mm:ss"));
-                item4->setData(fileInfo.birthTime(), Qt::UserRole);
-                items.append(item4);
-
-                QStandardItem *item5 = new QStandardItem(fileInfo.lastModified().toString("yyyy-MM-dd HH:mm:ss"));
-                item5->setData(fileInfo.lastModified(), Qt::UserRole);
-                items.append(item5);
-
-                tableModel->appendRow(items);
-            }
-        };
-        QMetaObject::invokeMethod(this, updateUI, Qt::QueuedConnection);
-    }
-}
-
-void FileSearch::onSearchFinished() {
-    QMutexLocker locker(queueMutex);
-    activeTaskCount--;
-    // Logger::instance().log("activeTaskCount 减少，当前计数: " + QString::number(activeTaskCount));
-    progressBar->setValue(progressBar->value() + 1);
-    updateProgressLabel();
-
-    if (activeTaskCount == 0 && taskQueue->isEmpty()) {
-        finishSearch();
-        qint64 elapsedTime = timer.elapsed();
-        onSearchTime(elapsedTime);
-        progressBar->setValue(totalDirectories);
-        updateProgressLabel();
-        isSearching = false;
-    }
-}
-
-void FileSearch::updateProgressLabel() {
-    int percentage = static_cast<int>((static_cast<float>(progressBar->value()) / totalDirectories) * 100);
-    progressLabel->setText(QString::number(percentage) + "%");
-}
-
-void FileSearch::onSearchTime(qint64 elapsedTime) {
-    if(!isStopping){
-        QMessageBox::information(this, "搜索完成", QString("搜索耗时: %1 毫秒").arg(elapsedTime));
-    }
-    timer.invalidate();
-    LOG_INFO(QString("计时结束，搜索耗时: %1 毫秒").arg(elapsedTime));
-}
-
+/*
+ * Summary: 处理停止按钮点击事件
+ * Parameters: 无
+ * Return: void
+ */
 void FileSearch::onFinishButtonClicked() {
-    if (!isSearching) {
-        LOG_ERROR("没有正在执行的搜索任务。");
-        QMessageBox::information(this, "搜索中断", "没有正在执行的搜索任务。");
-        return;
-    }
-
-    stopAllTasks();
-    qint64 elapsedTime = timer.elapsed();
-    if (!isStopping){
-        QMessageBox::information(this, "搜索中断", QString("搜索线程被中断，已耗时: %1 毫秒").arg(elapsedTime));
-    }
-    timer.invalidate();
-    LOG_INFO(QString("搜索线程被中断，已耗时: %1 毫秒").arg(elapsedTime));
-
-    finishSearch();
-
-    progressBar->setValue(progressBar->maximum());
-    updateProgressLabel();
-    isSearching = false;
+    searchCore->stopSearch();
 }
 
-void FileSearch::stopAllTasks() {
-    QMutexLocker locker(queueMutex);
-    isStopping = true;
-    while (!taskQueue->isEmpty()) {
-        taskQueue->dequeue();
-    }
-    queueCondition->wakeAll();
-}
-
+/*
+ * Summary: 处理搜索过滤文本变化事件
+ * Parameters:
+ * const QString &text - 输入的过滤文本
+ * Return: void
+ */
 void FileSearch::onSearchFilterChanged(const QString &text) {
     proxyModel->setFilterWildcard(text);
 }
 
-void FileSearch::onTaskStarted() {
-    QMutexLocker locker(queueMutex);
-    activeTaskCount++;
-    // Logger::instance().log("activeTaskCount 增加，当前计数: " + QString::number(activeTaskCount));
+/*
+ * Summary: 处理文件找到的信号，更新UI
+ * Parameters:
+ * const QString &filePath - 文件路径
+ * Return: void
+ */
+void FileSearch::onFileFound(const QString &filePath) {
+    QFileInfo fileInfo(filePath);
+    QList<QStandardItem *> items;
+
+    QStandardItem *item0 = new QStandardItem(QString::number(tableModel->rowCount() + 1));
+    item0->setData(tableModel->rowCount() + 1, Qt::UserRole);
+    items.append(item0);
+
+    QStandardItem *item1 = new QStandardItem(fileInfo.fileName());
+    item1->setData(fileInfo.fileName(), Qt::UserRole);
+    items.append(item1);
+
+    QStandardItem *item2 = new QStandardItem(fileInfo.absoluteFilePath());
+    item2->setData(fileInfo.absoluteFilePath(), Qt::UserRole);
+    items.append(item2);
+
+    QStandardItem *item3 = new QStandardItem(fileInfo.suffix());
+    item3->setData(fileInfo.suffix(), Qt::UserRole);
+    items.append(item3);
+
+    QStandardItem *item4 = new QStandardItem(fileInfo.birthTime().toString("yyyy-MM-dd HH:mm:ss"));
+    item4->setData(fileInfo.birthTime(), Qt::UserRole);
+    items.append(item4);
+
+    QStandardItem *item5 = new QStandardItem(fileInfo.lastModified().toString("yyyy-MM-dd HH:mm:ss"));
+    item5->setData(fileInfo.lastModified(), Qt::UserRole);
+    items.append(item5);
+
+    tableModel->appendRow(items);
 }
 
-QVector<QString> FileSearch::extractKeywordsFromFile(const QString &filePath) {
-    QVector<QString> keywords;
-
-    QString filename = QFileInfo(filePath).fileName();
-
-    // 使用正则表达式匹配所有单词
-    QRegularExpression wordRegex("\\b\\w+\\b");
-    QRegularExpressionMatchIterator it = wordRegex.globalMatch(filename.toLower());
-
-    // 停用词列表（可以根据需要添加更多停用词）
-    QSet<QString> stopwords = {"the", "and", "is", "in", "to", "of", "a", "an"};
-
-    // 提取并过滤关键词
-    while (it.hasNext()) {
-        QRegularExpressionMatch match = it.next();
-        QString word = match.captured(0);
-
-        // 过滤掉长度小于等于2的词和停用词
-        if (word.length() > 2 && !stopwords.contains(word)) {
-            keywords.append(word);
-        }
-    }
-
-    return keywords;
+/*
+ * Summary: 处理搜索完成的信号，通知用户
+ * Parameters: 无
+ * Return: void
+ */
+void FileSearch::onSearchFinished() {
+    QMessageBox::information(this, "搜索完成", "文件搜索已完成。");
 }
 
-void FileSearch::onFileInserted(const QString &filePath) {
-
+/*
+ * Summary: 更新进度条和标签
+ * Parameters:
+ * int value - 当前进度值
+ * int total - 总进度值
+ * Return: void
+ */
+void FileSearch::updateProgress(int value, int total) {
+    progressBar->setMaximum(total);
+    progressBar->setValue(value);
+    updateProgressLabel(value, total);
 }
 
-void FileSearch::initFileDatabase() {
-    QString rootPath = QDir::rootPath();
-
-    // 清空已处理路径和文件的记录
-    uniqueFiles.clear();
-    uniquePaths.clear();
-
-    // 遍历文件夹并建立索引
-    enqueueDirectories(rootPath, 2); // 加入任务队列
-    totalDirectories = taskQueue->size();
-
-    // 只在后台运行数据库插入逻辑，避免更新UI
-    for (int i = 0; i < threadPool->maxThreadCount(); ++i) {
-        FileSearchThread *task = new FileSearchThread("", taskQueue, queueMutex, queueCondition);
-        connect(task, &FileSearchThread::fileFound, this, [this](const QString &filePath) {
-            if (!uniqueFiles.contains(filePath)) {
-                uniqueFiles.insert(filePath);
-                // 插入文件信息到数据库而不更新UI
-                dbThread->insertFileInfo(filePath);
-            }
-        });
-        threadPool->start(task);
-    }
-    LOG_INFO("文件索引数据库建立启动完成。");
+/*
+ * Summary: 更新进度标签显示
+ * Parameters:
+ * int value - 当前进度值
+ * int total - 总进度值
+ * Return: void
+ */
+void FileSearch::updateProgressLabel(int value, int total) {
+    int percentage = static_cast<int>((static_cast<float>(value) / total) * 100);
+    progressLabel->setText(QString::number(percentage) + "%");
 }

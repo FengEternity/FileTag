@@ -2,33 +2,47 @@
 // Created by Monty-Lee  on 24-10-31.
 //
 
-#ifndef FILETAG_DATABASETHREAD_H
-#define FILETAG_DATABASETHREAD_H
+#ifndef DATABASETHREAD_H
+#define DATABASETHREAD_H
 
-#include<QThread>
-#include "FileDatabase.h"
+#include <QThread>
+#include <QMutex>
+#include <QWaitCondition>
+#include <QQueue>
+#include <QVariant>
+
+#include "AbstractDatabase.h"
 
 class DatabaseThread : public QThread {
 Q_OBJECT
-
 public:
-    explicit DatabaseThread(FileDatabase *db, QObject *parent = nullptr);
-    ~DatabaseThread() override;
+    explicit DatabaseThread(AbstractDatabase *db, QObject *parent = nullptr);
+    ~DatabaseThread();
 
-    void run() override;
-
-    void insertFileInfo(const QString &filePath);
-    void searchFiles(const QString &keyword);
+    void addInsertFileTask(const QString &filePath);
+    void addSearchFilesTask(const QString &keyword);
 
 signals:
     void fileInserted(const QString &filePath);
-    void searchFinished(const QVector<QString> &result);
+    void searchFinished(const QVector<QString> &results);
+
+protected:
+    void run() override;
 
 private:
-    FileDatabase *db;
-    QString filePath;
-    QString keyword;
+    struct Task {
+        enum TaskType { InsertFile, SearchFiles } type;
+        QVariant data;
+    };
+
+    AbstractDatabase *db;
+    QQueue<Task> taskQueue;
+    QMutex mutex;
+    QWaitCondition condition;
+    bool isRunning;
+
+    void processInsertFile(const QString &filePath);
+    void processSearchFiles(const QString &keyword);
 };
 
-
-#endif //FILETAG_DATABASETHREAD_H
+#endif // DATABASETHREAD_H
