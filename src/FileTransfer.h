@@ -7,6 +7,7 @@
 #include <QMessageBox>
 #include <QDataStream>
 #include <QTimer>
+
 #include "ui_FileTransfer.h"
 
 class FileTransfer : public QMainWindow

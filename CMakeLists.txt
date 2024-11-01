@@ -48,6 +48,9 @@ add_executable(FileTag
         src/FileDatabase.h
         src/DatabaseThread.h
         src/DatabaseThread.cpp
+        src/FileTransfer.h
+        src/FileTransfer.cpp
+        src/FileTransfer.ui
 )
 
 # 设置包含目录

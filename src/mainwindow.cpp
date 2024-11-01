@@ -1,8 +1,3 @@
-#include "mainwindow.h"
-#include "ui_mainwindow.h"
-#include "MultiSelectDialog.h"
-#include "FileSearch.h"
-#include "Logger.h"
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QFileDialog>
@@ -12,6 +7,13 @@
 #include <QPixmap>
 #include <QCloseEvent>
 #include <QStringListModel>
+
+#include "mainwindow.h"
+#include "ui_mainwindow.h"
+#include "MultiSelectDialog.h"
+#include "FileSearch.h"
+#include "Logger.h"
+#include "FileTransfer.h"
 
 MainWindow::MainWindow(QWidget *parent)
         : QMainWindow(parent),
@@ -98,7 +100,6 @@ void MainWindow::onFileSearchClicked() {
     setCentralWidget(fileSearch);
 }
 
-// 文件传输按钮点击事件处理
 // 文件传输按钮点击事件处理
 void MainWindow::onFileTransferClicked() {
     QWidget *currentCentralWidget = takeCentralWidget();
