@@ -3,40 +3,76 @@
 //
 
 #include "DatabaseThread.h"
-#include "Logger.h"
+#include "FileIndexDatabase.h"
+#include <QDebug>
 
-DatabaseThread::DatabaseThread(FileDatabase *db, QObject *parent) : QThread(parent), db(db) {
-    LOG_INFO("数据库线程创建成功。");
+DatabaseThread::DatabaseThread(AbstractDatabase *db, QObject *parent)
+        : QThread(parent), db(db), isRunning(true) {
+    start();
 }
 
 DatabaseThread::~DatabaseThread() {
-    LOG_INFO("数据库线程销毁。");
+    // 请求线程停止并等待其结束
+    {
+        QMutexLocker locker(&mutex);
+        isRunning = false;
+        condition.wakeAll();
+    }
+    wait();
+}
+
+void DatabaseThread::addInsertFileTask(const QString &filePath) {
+    QMutexLocker locker(&mutex);
+    taskQueue.enqueue({ Task::InsertFile, filePath });
+    condition.wakeOne();
+}
+
+void DatabaseThread::addSearchFilesTask(const QString &keyword) {
+    QMutexLocker locker(&mutex);
+    taskQueue.enqueue({ Task::SearchFiles, keyword });
+    condition.wakeOne();
 }
 
 void DatabaseThread::run() {
-//    if (!db->openDatabase()) {
-//        LOG_ERROR("数据库打开失败。");
-//        return;
-//    }
+    while (true) {
+        Task task;
+        {
+            QMutexLocker locker(&mutex);
+            while (taskQueue.isEmpty() && isRunning) {
+                condition.wait(&mutex);
+            }
+            if (!isRunning && taskQueue.isEmpty()) {
+                break;
+            }
+            task = taskQueue.dequeue();
+        }
 
-    if (!filePath.isEmpty()) {
-        db->insertFileInfo(filePath);
-        emit fileInserted(filePath);
-    } else {
-        QVector<QString> result = db->searchFiles(keyword);
-        emit searchFinished(result);
+        switch (task.type) {
+            case Task::InsertFile:
+                processInsertFile(task.data.toString());
+                break;
+            case Task::SearchFiles:
+                processSearchFiles(task.data.toString());
+                break;
+        }
     }
-
-    // db->closeDatabase();
 }
 
-
-void DatabaseThread::insertFileInfo(const QString &filePath) {
-    this->filePath = filePath;
-    start();
+void DatabaseThread::processInsertFile(const QString &filePath) {
+    // 调用数据库的插入文件信息方法
+    if (auto fileDb = dynamic_cast<FileIndexDatabase*>(db)) {
+        if (fileDb->insertFileInfo(filePath)) {
+            emit fileInserted(filePath);
+        } else {
+            qDebug() << "插入文件信息失败：" << filePath;
+        }
+    }
 }
 
-void DatabaseThread::searchFiles(const QString &keyword) {
-    this->keyword = keyword;
-    start();
+void DatabaseThread::processSearchFiles(const QString &keyword) {
+    // 调用数据库的搜索文件方法
+    if (auto fileDb = dynamic_cast<FileIndexDatabase*>(db)) {
+        QVector<QString> results = fileDb->searchFiles(keyword);
+        emit searchFinished(results);
+    }
 }

@@ -1,26 +1,25 @@
-// FileSearch.h
+/*
+ * FileSearch.h
+ * Author: Montee
+ * CreateDate: 2024-11-1
+ * Updater: Montee
+ * UpdateDate: 2024-11-1
+ * Summary: 文件搜索窗口类的实现文件
+ */
 
 #ifndef FILESEARCH_H
 #define FILESEARCH_H
+
 #include <QWidget>
 #include <QLineEdit>
 #include <QTableView>
 #include <QPushButton>
-#include <QThreadPool>
-#include <QElapsedTimer>
 #include <QStandardItemModel>
 #include <QProgressBar>
 #include <QLabel>
 #include <QSortFilterProxyModel>
-#include <QVector>
-#include <QQueue>
-#include <QMutex>
-#include <QWaitCondition>
-#include <QSet>
 
-#include "FileSearchThread.h"
-#include "FileDatabase.h"
-#include "DatabaseThread.h"
+#include "FileSearchCore.h"
 
 namespace Ui {
     class FileSearch;
@@ -35,17 +34,14 @@ public:
 
 private slots:
     void onSearchButtonClicked();
-    void onFileFound(const QString &filePath);
-    void onSearchFinished();
     void onFinishButtonClicked();
     void onSearchFilterChanged(const QString &text);
-    void onFileInserted(const QString &filePath);
-    // void onSearchFinished(const QVector<QString> &result);
-
+    void onFileFound(const QString &filePath);
+    void onSearchFinished();
+    void updateProgress(int value, int total);
 
 private:
     Ui::FileSearch *ui;
-    QThreadPool *threadPool;
     QPushButton *searchButton;
     QLineEdit *searchLineEdit;
     QLineEdit *pathLineEdit;
@@ -56,37 +52,10 @@ private:
     QPushButton *finishButton;
     QProgressBar *progressBar;
     QLabel *progressLabel;
-    QElapsedTimer timer;
-    int updateCounter;
-    int activeTaskCount;
-    int totalDirectories;
 
-    void onSearchTime(qint64 elapsedTime);
-    void updateProgressLabel();
-    void finishSearch();
-    void stopAllTasks();
-    void onTaskStarted();
-    void initFileDatabase();
+    FileSearchCore *searchCore;
 
-    bool isSearching;
-    bool firstSearch;
-    bool isStopping;
-    static QVector<QString> filesBatch; // 声明静态变量
-    QSet<QString> uniquePaths; // 用于记录已处理的目录
-    QSet<QString> uniqueFiles; // 用于记录已记录的文件
-
-    QVector<FileSearchThread *> activeTasks; // 新增保存活动任务的成员变量
-
-    // 新增任务队列和同步机制的变量
-    QQueue<QString> *taskQueue;
-    QMutex *queueMutex;
-    QWaitCondition *queueCondition;
-
-    void enqueueDirectories(const QString &path, int depth); // 新增方法声明
-    QVector<QString> extractKeywordsFromFile(const QString &filePath);  // 声明提取关键词的方法
-
-    FileDatabase *db;
-    DatabaseThread *dbThread;
+    void updateProgressLabel(int value, int total);
 };
 
 #endif // FILESEARCH_H
