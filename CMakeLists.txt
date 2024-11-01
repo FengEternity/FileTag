@@ -44,12 +44,14 @@ add_executable(FileTag
         src/about.h
         src/about.cpp
         src/about.ui
-        src/FileDatabase.cpp
-        src/FileDatabase.h
+        src/FileIndexDatabase.cpp
+        src/FileIndexDatabase.h
         src/DatabaseThread.h
         src/DatabaseThread.cpp
         src/FileSearchCore.h
         src/FileSearchCore.cpp
+        src/AbstractDatabase.h
+        src/AbstractDatabase.cpp
 )
 
 # 设置包含目录

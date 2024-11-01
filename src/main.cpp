@@ -14,6 +14,7 @@
 #include "Logger.h"
 #include "about.h"
 #include "FileSearch.h"
+#include "FileSearchCore.h"
 
 void applyStyleSheet(QApplication &app) {
     QFile file(":/stylesheet.qss");
@@ -75,6 +76,9 @@ int main(int argc, char *argv[]) {
     if (about) {
         QObject::connect(&w, &MainWindow::mainWindowClosed, about.get(), &QWidget::close);
     }
+
+    FileSearchCore* searchCore = new FileSearchCore(nullptr);
+    searchCore->initFileDatabase();
 
     return app.exec();
 }

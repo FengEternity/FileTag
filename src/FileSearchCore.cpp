@@ -32,7 +32,7 @@ FileSearchCore::FileSearchCore(QObject *parent)
           isSearching(false),
           firstSearch(true),
           isStopping(false),
-          db(new FileDatabase("file_index.db")),
+          db(new FileIndexDatabase("file_index.db")),
           dbThread(new DatabaseThread(db, this)),
           taskQueue(new QQueue<QString>()),
           queueMutex(new QMutex()),
@@ -164,16 +164,24 @@ void FileSearchCore::enqueueDirectories(const QString &path, int depth) {
  * Return: void
  */
 void FileSearchCore::onFileFound(const QString &filePath) {
-    if (!uniqueFiles.contains(filePath)) {
-        uniqueFiles.insert(filePath);
-        filesBatch.append(filePath);
-
-        // 插入文件信息到数据库
-        dbThread->insertFileInfo(filePath);
-
-        emit fileFound(filePath);
+    {
+        QMutexLocker locker(&uniqueFilesMutex);
+        if (!uniqueFiles.contains(filePath)) {
+            uniqueFiles.insert(filePath);
+            filesBatch.append(filePath);
+        } else {
+            // 如果文件已经处理过，直接返回
+            return;
+        }
     }
+
+    // 在释放锁之后进行数据库操作
+    dbThread->addInsertFileTask(filePath);
+
+    // 发射信号，通知文件已找到
+    emit fileFound(filePath);
 }
+
 
 /*
  * Summary: 处理搜索完成的操作
@@ -277,6 +285,7 @@ void FileSearchCore::onFileInserted(const QString &filePath) {
  * Return: void
  */
 void FileSearchCore::initFileDatabase() {
+    LOG_INFO("开始初始化文件数据库。");
     QString rootPath = QDir::rootPath();
 
     // 清空已处理路径和文件的记录
@@ -294,7 +303,7 @@ void FileSearchCore::initFileDatabase() {
             if (!uniqueFiles.contains(filePath)) {
                 uniqueFiles.insert(filePath);
                 // 插入文件信息到数据库而不更新UI
-                dbThread->insertFileInfo(filePath);
+                dbThread->addInsertFileTask(filePath);
             }
         });
         threadPool->start(task);

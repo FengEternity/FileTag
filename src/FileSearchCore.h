@@ -19,7 +19,7 @@
 #include <QSet>
 
 #include "FileSearchThread.h"
-#include "FileDatabase.h"
+#include "FileIndexDatabase.h"
 #include "DatabaseThread.h"
 
 class FileSearchCore : public QObject {
@@ -66,8 +66,9 @@ private:
     QQueue<QString> *taskQueue;
     QMutex *queueMutex;
     QWaitCondition *queueCondition;
+    QMutex uniqueFilesMutex;
 
-    FileDatabase *db;
+    FileIndexDatabase *db;
     DatabaseThread *dbThread;
 };
 
