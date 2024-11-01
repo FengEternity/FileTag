@@ -1,0 +1,71 @@
+/*
+ * FileSearchCore.h
+ * Author: Montee
+ * CreateDate: 2024-11-1
+ * Updater: Montee
+ * UpdateDate: 2024-11-1
+ * Summary: 文件文件搜索核心逻辑
+ */
+
+#ifndef FILESEARCHCORE_H
+#define FILESEARCHCORE_H
+
+#include <QObject>
+#include <QThreadPool>
+#include <QElapsedTimer>
+#include <QQueue>
+#include <QMutex>
+#include <QWaitCondition>
+#include <QSet>
+
+#include "FileSearchThread.h"
+#include "FileDatabase.h"
+#include "DatabaseThread.h"
+
+class FileSearchCore : public QObject {
+Q_OBJECT
+
+public:
+    explicit FileSearchCore(QObject *parent = nullptr);
+    ~FileSearchCore();
+
+    void startSearch(const QString &keyword, const QString &path);
+    void stopSearch();
+    void initFileDatabase();
+
+signals:
+    void fileFound(const QString &filePath);
+    void searchFinished();
+    void progressUpdated(int value, int total);
+
+private slots:
+    void onFileInserted(const QString &filePath);
+    void onSearchFinished();
+    void onTaskStarted();
+    void onFileFound(const QString &filePath);
+
+private:
+    void enqueueDirectories(const QString &path, int depth);
+    void finishSearch();
+    void stopAllTasks();
+    void onSearchTime(qint64 elapsedTime);
+
+    // 成员变量
+    int activeTaskCount;
+    int totalDirectories;
+    bool isSearching;
+    static QVector<QString> filesBatch;
+
+    QThreadPool *threadPool;
+    QElapsedTimer timer;
+    QSet<QString> uniquePaths;
+    QSet<QString> uniqueFiles;
+    QQueue<QString> *taskQueue;
+    QMutex *queueMutex;
+    QWaitCondition *queueCondition;
+
+    FileDatabase *db;
+    DatabaseThread *dbThread;
+};
+
+#endif // FILESEARCHCORE_H

@@ -48,6 +48,8 @@ add_executable(FileTag
         src/FileDatabase.h
         src/DatabaseThread.h
         src/DatabaseThread.cpp
+        src/FileSearchCore.h
+        src/FileSearchCore.cpp
 )
 
 # 设置包含目录
