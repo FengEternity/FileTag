@@ -53,7 +53,10 @@ private:
     // 成员变量
     int activeTaskCount;
     int totalDirectories;
+    int updateCounter;
     bool isSearching;
+    bool firstSearch;
+    bool isStopping;
     static QVector<QString> filesBatch;
 
     QThreadPool *threadPool;
