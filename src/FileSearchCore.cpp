@@ -107,8 +107,10 @@ void FileSearchCore::startSearch(const QString &keyword, const QString &path) {
     isSearching = true;
 
     // 使用数据库进行搜索
-    QVector<QString> results = db->searchFiles(keyword);
+    // QVector<QString> results = db->searchFiles(keyword);
 
+    // result 置空
+    QVector<QString> results;
     if (!results.isEmpty()) {
         for (const QString &filePath : results) {
             emit fileFound(filePath);
