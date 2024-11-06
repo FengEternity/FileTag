@@ -3,7 +3,7 @@
  * Author: Montee
  * CreateDate: 2024-11-1
  * Updater: Montee
- * UpdateDate: 2024-11-1
+ * UpdateDate: 2024-11-6
  * Summary: 文件文件搜索核心逻辑
  */
 
@@ -107,8 +107,11 @@ void FileSearchCore::startSearch(const QString &keyword, const QString &path) {
     isSearching = true;
 
     // 使用数据库进行搜索
-    QVector<QString> results = db->searchFiles(keyword);
+    // QVector<QString> results = db->searchFiles(keyword);
 
+    // result 置空,修改搜索逻辑为遍历目录:
+    // 基于数据库搜索问题较多，暂不采用
+    QVector<QString> results;
     if (!results.isEmpty()) {
         for (const QString &filePath : results) {
             emit fileFound(filePath);
