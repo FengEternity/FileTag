@@ -3,7 +3,7 @@
  * Author: Montee
  * CreateDate: 2024-11-1
  * Updater: Montee
- * UpdateDate: 2024-11-6
+ * UpdateDate: 2024-11-1
  * Summary: 文件文件搜索核心逻辑
  */
 
@@ -36,7 +36,8 @@ FileSearchCore::FileSearchCore(QObject *parent)
           dbThread(new DatabaseThread(db, this)),
           taskQueue(new QQueue<QString>()),
           queueMutex(new QMutex()),
-          queueCondition(new QWaitCondition())
+          queueCondition(new QWaitCondition()),
+          includeSystemFiles(false)
 {
     threadPool->setMaxThreadCount(QThread::idealThreadCount());
 
@@ -74,7 +75,7 @@ FileSearchCore::~FileSearchCore() {
  * const QString &path - 搜索路径
  * Return: void
  */
-void FileSearchCore::startSearch(const QString &keyword, const QString &path) {
+void FileSearchCore::startSearch(const QString &keyword, const QString &path, bool includeSystemFiles) {
     if(!uniqueFiles.isEmpty()){
         uniqueFiles.clear();
     }
@@ -107,13 +108,13 @@ void FileSearchCore::startSearch(const QString &keyword, const QString &path) {
     isSearching = true;
 
     // 使用数据库进行搜索
-    // QVector<QString> results = db->searchFiles(keyword);
+    QVector<QString> results = db->searchFiles(keyword);
 
-    // result 置空,修改搜索逻辑为遍历目录:
-    // 基于数据库搜索问题较多，暂不采用
-    QVector<QString> results;
     if (!results.isEmpty()) {
         for (const QString &filePath : results) {
+            if (!includeSystemFiles && isSystemDirectory(filePath)) {
+                continue;
+            }
             emit fileFound(filePath);
         }
         emit searchFinished();
@@ -121,7 +122,8 @@ void FileSearchCore::startSearch(const QString &keyword, const QString &path) {
         LOG_INFO("数据库中没有结果，开始文件系统遍历搜索。");
         uniquePaths.clear();
         uniqueFiles.clear();
-        enqueueDirectories(searchPath, 2);
+
+        enqueueDirectories(searchPath, 2, includeSystemFiles);
 
         totalDirectories = taskQueue->size();
         emit progressUpdated(0, totalDirectories);
@@ -143,18 +145,28 @@ void FileSearchCore::startSearch(const QString &keyword, const QString &path) {
  * int depth - 深度
  * Return: void
  */
-void FileSearchCore::enqueueDirectories(const QString &path, int depth) {
+void FileSearchCore::enqueueDirectories(const QString &path, int depth, bool includeSystemFiles) {
     QDirIterator dirIt(path, QDir::Dirs | QDir::NoDotAndDotDot, QDirIterator::NoIteratorFlags);
     while (dirIt.hasNext()) {
         dirIt.next();
         QString subDirPath = dirIt.filePath();
+
+        //检查复选框状态
+        LOG_INFO("Include system files: " + QString::number(includeSystemFiles));
+
+        // 检查是否包含系统文件目录
+        if (!includeSystemFiles && isSystemDirectory(subDirPath)) {
+            LOG_INFO("Skipping system directory: " + subDirPath);
+            continue;  // 跳过系统目录
+        }
+
         if (!uniquePaths.contains(subDirPath)) {
             uniquePaths.insert(subDirPath);
             taskQueue->enqueue(subDirPath);
             totalDirectories++;
 
             if (depth > 1) {
-                enqueueDirectories(subDirPath, depth - 1);
+                enqueueDirectories(subDirPath, depth - 1, includeSystemFiles);
             }
         }
     }
@@ -296,7 +308,7 @@ void FileSearchCore::initFileDatabase() {
     uniquePaths.clear();
 
     // 遍历文件夹并建立索引
-    enqueueDirectories(rootPath, 2); // 加入任务队列
+    enqueueDirectories(rootPath, 2, includeSystemFiles); // 加入任务队列
     totalDirectories = taskQueue->size();
 
     // 只在后台运行数据库插入逻辑，避免更新UI
@@ -312,4 +324,19 @@ void FileSearchCore::initFileDatabase() {
         threadPool->start(task);
     }
     LOG_INFO("文件索引数据库建立启动完成。");
+}
+
+/*
+ * Summary: 判断系统目录
+ * Parameters: 
+ * const QString& path - 文件路径
+ * Return: bool
+ */
+bool FileSearchCore::isSystemDirectory(const QString& path) {
+    // 根据需要判断系统目录
+    // 例如，在 Windows 上，检查是否在 C:\Windows 或其他系统路径
+    LOG_INFO("Checking if directory is system: " + path);
+    return path.startsWith(QDir::rootPath() + "Windows") ||
+        path.startsWith(QDir::rootPath() + "Program Files") ||
+        path.startsWith(QDir::rootPath() + "Program Files (x86)");
 }

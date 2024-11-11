@@ -18,6 +18,7 @@
 #include <QProgressBar>
 #include <QLabel>
 #include <QSortFilterProxyModel>
+#include <QCheckBox>
 
 #include "FileSearchCore.h"
 
@@ -39,6 +40,7 @@ private slots:
     void onFileFound(const QString &filePath);
     void onSearchFinished();
     void updateProgress(int value, int total);
+    void updateProgressLabel(int value, int total);
 
 private:
     Ui::FileSearch *ui;
@@ -51,11 +53,11 @@ private:
     QSortFilterProxyModel *proxyModel;
     QPushButton *finishButton;
     QProgressBar *progressBar;
+    QCheckBox *includeSystemFilesCheckBox; // 声明复选框
     QLabel *progressLabel;
 
     FileSearchCore *searchCore;
 
-    void updateProgressLabel(int value, int total);
 };
 
 #endif // FILESEARCH_H
