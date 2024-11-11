@@ -23,10 +23,10 @@
  * QWidget *parent - 父窗口指针，默认值为 nullptr
  * Return: 无
  */
-FileSearch::FileSearch(QWidget *parent) :
-        QWidget(parent),
-        ui(new Ui::FileSearch),
-        searchCore(new FileSearchCore(this))
+FileSearch::FileSearch(QWidget* parent) :
+    QWidget(parent),
+    ui(new Ui::FileSearch),
+    searchCore(new FileSearchCore(this))
 {
     ui->setupUi(this);
 
@@ -62,6 +62,9 @@ FileSearch::FileSearch(QWidget *parent) :
     connect(searchButton, &QPushButton::clicked, this, &FileSearch::onSearchButtonClicked);
     connect(finishButton, &QPushButton::clicked, this, &FileSearch::onFinishButtonClicked);
     connect(filterLineEdit, &QLineEdit::textChanged, this, &FileSearch::onSearchFilterChanged);
+
+    // 确保复选框是通过 UI 文件创建的
+    includeSystemFilesCheckBox = ui->includeSystemFilesCheckBox;
 
     LOG_INFO("表格视图模型设置完成。");
 
@@ -114,10 +117,15 @@ void FileSearch::onSearchButtonClicked() {
         }
     }
 
+    // 添加日志以确认复选框状态
+    bool includeSystemFiles = includeSystemFilesCheckBox->isChecked();
+    LOG_INFO("Include system files: " + QString::number(includeSystemFiles));
+
     tableModel->removeRows(0, tableModel->rowCount());
 
-    searchCore->startSearch(searchKeyword, searchPath);
+    searchCore->startSearch(searchKeyword, searchPath, includeSystemFiles);
 }
+
 
 /*
  * Summary: 处理停止按钮点击事件

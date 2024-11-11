@@ -29,10 +29,10 @@ public:
     explicit FileSearchCore(QObject *parent = nullptr);
     ~FileSearchCore();
 
-    void startSearch(const QString &keyword, const QString &path);
+    void startSearch(const QString &keyword, const QString &path, bool includeSystemFiles);
     void stopSearch();
     void initFileDatabase();
-
+    bool isSystemDirectory(const QString& path);
 signals:
     void fileFound(const QString &filePath);
     void searchFinished();
@@ -45,7 +45,7 @@ private slots:
     void onFileFound(const QString &filePath);
 
 private:
-    void enqueueDirectories(const QString &path, int depth);
+    void enqueueDirectories(const QString &path, int depth, bool includeSystemFiles);
     void finishSearch();
     void stopAllTasks();
     void onSearchTime(qint64 elapsedTime);
@@ -57,6 +57,7 @@ private:
     bool isSearching;
     bool firstSearch;
     bool isStopping;
+    bool includeSystemFiles;
     static QVector<QString> filesBatch;
 
     QThreadPool *threadPool;
