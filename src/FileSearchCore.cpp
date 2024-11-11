@@ -11,6 +11,7 @@
 #include <QDirIterator>
 #include <QRegularExpression>
 #include <QMetaObject>
+#include <QMessageBox>
 
 #include "Logger.h"
 #include "FileSearchCore.h"
@@ -76,6 +77,11 @@ FileSearchCore::~FileSearchCore() {
  * Return: void
  */
 void FileSearchCore::startSearch(const QString &keyword, const QString &path, bool includeSystemFiles) {
+    if(isSearching) {
+        QMessageBox::information(nullptr, "正在执行搜索任务", "正在执行搜索任务，\n如需重新搜索，请点击结束按钮！");
+        return;
+    }
+    
     if(!uniqueFiles.isEmpty()){
         uniqueFiles.clear();
     }
@@ -184,6 +190,7 @@ void FileSearchCore::onFileFound(const QString &filePath) {
         if (!uniqueFiles.contains(filePath)) {
             uniqueFiles.insert(filePath);
             filesBatch.append(filePath);
+            LOG_INFO(QString("找到文件: %1").arg(filePath));
         } else {
             // 如果文件已经处理过，直接返回
             return;
@@ -206,7 +213,7 @@ void FileSearchCore::onFileFound(const QString &filePath) {
 void FileSearchCore::onSearchFinished() {
     QMutexLocker locker(queueMutex);
     activeTaskCount--;
-    emit progressUpdated(totalDirectories - activeTaskCount, totalDirectories);
+    emit progressUpdated(totalDirectories - activeTaskCount, totalDirectories); // 更新进度
 
     if (activeTaskCount == 0 && taskQueue->isEmpty()) {
         finishSearch();
