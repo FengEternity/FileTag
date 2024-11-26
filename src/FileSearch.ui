@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>360</height>
+    <height>373</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -53,10 +53,26 @@
     </widget>
    </item>
    <item>
-    <widget class="QLineEdit" name="filterLineEdit">
-     <property name="placeholderText">
-      <string>搜索过滤...</string>
+    <widget class="QGroupBox" name="groupBox_4">
+     <property name="title">
+      <string/>
      </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_4">
+      <item>
+       <widget class="QLineEdit" name="filterLineEdit">
+        <property name="placeholderText">
+         <string>搜索过滤...</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="systemFilesCheckBox">
+        <property name="text">
+         <string>是否搜索系统文件</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
    <item>

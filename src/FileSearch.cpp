@@ -12,6 +12,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QStandardItem>
+#include <QCheckBox>
 
 #include "Logger.h"
 #include "FileSearch.h"
@@ -36,6 +37,8 @@ FileSearch::FileSearch(QWidget *parent) :
     pathLineEdit = ui->pathLineEdit;
     filterLineEdit = ui->filterLineEdit;
     resultTableView = ui->resultTableView;
+    systemFilesCheckBox = ui->systemFilesCheckBox;
+    systemFilesCheckBox->setChecked(false); // 默认不搜索系统文件
 
     // 设置表格视图模型
     tableModel = new QStandardItemModel(this);
@@ -58,6 +61,7 @@ FileSearch::FileSearch(QWidget *parent) :
     finishButton = ui->finishButton;
     progressBar = ui->progressBar;
     progressLabel = ui->progressLabel;
+
 
     connect(searchButton, &QPushButton::clicked, this, &FileSearch::onSearchButtonClicked);
     connect(finishButton, &QPushButton::clicked, this, &FileSearch::onFinishButtonClicked);
@@ -98,6 +102,7 @@ FileSearch::~FileSearch() {
 void FileSearch::onSearchButtonClicked() {
     QString searchKeyword = searchLineEdit->text();
     QString searchPath = pathLineEdit->text();
+    bool includeSystemFiles = systemFilesCheckBox->isChecked(); // 获取复选框状态
 
     if (searchKeyword.isEmpty()) {
         QMessageBox::information(this, "搜索关键字为空", "请输入搜索关键字。");
@@ -116,7 +121,7 @@ void FileSearch::onSearchButtonClicked() {
 
     tableModel->removeRows(0, tableModel->rowCount());
 
-    searchCore->startSearch(searchKeyword, searchPath);
+    searchCore->startSearch(searchKeyword, searchPath, includeSystemFiles);
 }
 
 /*

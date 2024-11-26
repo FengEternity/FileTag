@@ -18,6 +18,7 @@
 #include <QProgressBar>
 #include <QLabel>
 #include <QSortFilterProxyModel>
+#include <QCheckBox> // 添加 QCheckBox 头文件
 
 #include "FileSearchCore.h"
 
@@ -52,6 +53,8 @@ private:
     QPushButton *finishButton;
     QProgressBar *progressBar;
     QLabel *progressLabel;
+    QCheckBox *systemFilesCheckBox; // 新增复选框指针
+
 
     FileSearchCore *searchCore;
 
