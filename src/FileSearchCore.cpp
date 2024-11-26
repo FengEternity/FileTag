@@ -3,7 +3,7 @@
  * Author: Montee
  * CreateDate: 2024-11-1
  * Updater: Montee
- * UpdateDate: 2024-11-6
+ * UpdateDate: 2024-11-1
  * Summary: 文件文件搜索核心逻辑
  */
 
@@ -11,11 +11,10 @@
 #include <QDirIterator>
 #include <QRegularExpression>
 #include <QMetaObject>
-#include <QMessageBox>
 
 #include "Logger.h"
 #include "FileSearchCore.h"
-// 初始化静态成员变量
+ // 初始化静态成员变量
 QVector<QString> FileSearchCore::filesBatch;
 
 /*
@@ -24,20 +23,21 @@ QVector<QString> FileSearchCore::filesBatch;
  * QObject *parent - 父对象指针，默认值为 nullptr
  * Return: 无
  */
-FileSearchCore::FileSearchCore(QObject *parent)
-        : QObject(parent),
-          threadPool(new QThreadPool(this)),
-          updateCounter(0),
-          activeTaskCount(0),
-          totalDirectories(0),
-          isSearching(false),
-          firstSearch(true),
-          isStopping(false),
-          db(new FileIndexDatabase("file_index.db")),
-          dbThread(new DatabaseThread(db, this)),
-          taskQueue(new QQueue<QString>()),
-          queueMutex(new QMutex()),
-          queueCondition(new QWaitCondition())
+FileSearchCore::FileSearchCore(QObject* parent)
+    : QObject(parent),
+    threadPool(new QThreadPool(this)),
+    updateCounter(0),
+    activeTaskCount(0),
+    totalDirectories(0),
+    isSearching(false),
+    firstSearch(true),
+    isStopping(false),
+    db(new FileIndexDatabase("file_index.db")),
+    dbThread(new DatabaseThread(db, this)),
+    taskQueue(new QQueue<QString>()),
+    queueMutex(new QMutex()),
+    queueCondition(new QWaitCondition()),
+    includeSystemFiles(false)
 {
     threadPool->setMaxThreadCount(QThread::idealThreadCount());
 
@@ -46,7 +46,8 @@ FileSearchCore::FileSearchCore(QObject *parent)
         if (!db->createTables()) {
             LOG_ERROR("数据库表创建失败。");
         }
-    } else {
+    }
+    else {
         LOG_ERROR("数据库打开失败。");
     }
 
@@ -75,17 +76,12 @@ FileSearchCore::~FileSearchCore() {
  * const QString &path - 搜索路径
  * Return: void
  */
-void FileSearchCore::startSearch(const QString &keyword, const QString &path) {
-    if(isSearching) {
-        QMessageBox::information(nullptr, "正在执行搜索任务", "正在执行搜索任务，\n如需重新搜索，请点击结束按钮！");
-        return;
-    }
-
-    if(!uniqueFiles.isEmpty()){
+void FileSearchCore::startSearch(const QString& keyword, const QString& path, bool includeSystemFiles) {
+    if (!uniqueFiles.isEmpty()) {
         uniqueFiles.clear();
     }
 
-    if(!uniquePaths.isEmpty()){
+    if (!uniquePaths.isEmpty()) {
         uniquePaths.clear();
     }
 
@@ -97,7 +93,8 @@ void FileSearchCore::startSearch(const QString &keyword, const QString &path) {
     QString searchPath = path;
     if (searchPath.isEmpty()) {
         searchPath = QDir::rootPath();
-    } else {
+    }
+    else {
         QDir dir(searchPath);
         if (!dir.exists()) {
             LOG_INFO("指定的路径不存在。");
@@ -113,27 +110,29 @@ void FileSearchCore::startSearch(const QString &keyword, const QString &path) {
     isSearching = true;
 
     // 使用数据库进行搜索
-    // QVector<QString> results = db->searchFiles(keyword);
+    QVector<QString> results = db->searchFiles(keyword);
 
-    // result 置空,修改搜索逻辑为遍历目录:
-    // 基于数据库搜索问题较多，暂不采用
-    QVector<QString> results;
     if (!results.isEmpty()) {
-        for (const QString &filePath : results) {
+        for (const QString& filePath : results) {
+            if (!includeSystemFiles && isSystemDirectory(filePath)) {
+                continue;
+            }
             emit fileFound(filePath);
         }
         emit searchFinished();
-    } else {
+    }
+    else {
         LOG_INFO("数据库中没有结果，开始文件系统遍历搜索。");
         uniquePaths.clear();
         uniqueFiles.clear();
-        enqueueDirectories(searchPath, 2);
+
+        enqueueDirectories(searchPath, 2, includeSystemFiles);
 
         totalDirectories = taskQueue->size();
         emit progressUpdated(0, totalDirectories);
 
         for (int i = 0; i < threadPool->maxThreadCount(); ++i) {
-            FileSearchThread *task = new FileSearchThread(keyword, taskQueue, queueMutex, queueCondition);
+            FileSearchThread* task = new FileSearchThread(keyword, taskQueue, queueMutex, queueCondition);
             connect(task, &FileSearchThread::fileFound, this, &FileSearchCore::onFileFound);
             connect(task, &FileSearchThread::searchFinished, this, &FileSearchCore::onSearchFinished);
             connect(task, &FileSearchThread::taskStarted, this, &FileSearchCore::onTaskStarted);
@@ -149,18 +148,28 @@ void FileSearchCore::startSearch(const QString &keyword, const QString &path) {
  * int depth - 深度
  * Return: void
  */
-void FileSearchCore::enqueueDirectories(const QString &path, int depth) {
+void FileSearchCore::enqueueDirectories(const QString& path, int depth, bool includeSystemFiles) {
     QDirIterator dirIt(path, QDir::Dirs | QDir::NoDotAndDotDot, QDirIterator::NoIteratorFlags);
     while (dirIt.hasNext()) {
         dirIt.next();
         QString subDirPath = dirIt.filePath();
+
+        //检查复选框状态
+        LOG_INFO("Include system files: " + QString::number(includeSystemFiles));
+
+        // 检查是否包含系统文件目录
+        if (!includeSystemFiles && isSystemDirectory(subDirPath)) {
+            LOG_INFO("Skipping system directory: " + subDirPath);
+            continue;  // 跳过系统目录
+        }
+
         if (!uniquePaths.contains(subDirPath)) {
             uniquePaths.insert(subDirPath);
             taskQueue->enqueue(subDirPath);
             totalDirectories++;
 
             if (depth > 1) {
-                enqueueDirectories(subDirPath, depth - 1);
+                enqueueDirectories(subDirPath, depth - 1, includeSystemFiles);
             }
         }
     }
@@ -172,14 +181,14 @@ void FileSearchCore::enqueueDirectories(const QString &path, int depth) {
  * const QString &filePath - 文件路径
  * Return: void
  */
-void FileSearchCore::onFileFound(const QString &filePath) {
+void FileSearchCore::onFileFound(const QString& filePath) {
     {
         QMutexLocker locker(&uniqueFilesMutex);
         if (!uniqueFiles.contains(filePath)) {
             uniqueFiles.insert(filePath);
             filesBatch.append(filePath);
-            LOG_INFO(QString("找到文件: %1").arg(filePath));
-        } else {
+        }
+        else {
             // 如果文件已经处理过，直接返回
             return;
         }
@@ -201,7 +210,7 @@ void FileSearchCore::onFileFound(const QString &filePath) {
 void FileSearchCore::onSearchFinished() {
     QMutexLocker locker(queueMutex);
     activeTaskCount--;
-    emit progressUpdated(totalDirectories - activeTaskCount, totalDirectories); // 更新进度
+    emit progressUpdated(totalDirectories - activeTaskCount, totalDirectories);
 
     if (activeTaskCount == 0 && taskQueue->isEmpty()) {
         finishSearch();
@@ -285,7 +294,7 @@ void FileSearchCore::onTaskStarted() {
  * const QString &filePath - 文件路径
  * Return: void
  */
-void FileSearchCore::onFileInserted(const QString &filePath) {
+void FileSearchCore::onFileInserted(const QString& filePath) {
     // 可以在这里处理文件插入后的操作
 }
 
@@ -303,20 +312,35 @@ void FileSearchCore::initFileDatabase() {
     uniquePaths.clear();
 
     // 遍历文件夹并建立索引
-    enqueueDirectories(rootPath, 2); // 加入任务队列
+    enqueueDirectories(rootPath, 2, includeSystemFiles); // 加入任务队列
     totalDirectories = taskQueue->size();
 
     // 只在后台运行数据库插入逻辑，避免更新UI
     for (int i = 0; i < threadPool->maxThreadCount(); ++i) {
-        FileSearchThread *task = new FileSearchThread("", taskQueue, queueMutex, queueCondition);
-        connect(task, &FileSearchThread::fileFound, this, [this](const QString &filePath) {
+        FileSearchThread* task = new FileSearchThread("", taskQueue, queueMutex, queueCondition);
+        connect(task, &FileSearchThread::fileFound, this, [this](const QString& filePath) {
             if (!uniqueFiles.contains(filePath)) {
                 uniqueFiles.insert(filePath);
                 // 插入文件信息到数据库而不更新UI
                 dbThread->addInsertFileTask(filePath);
             }
-        });
+            });
         threadPool->start(task);
     }
     LOG_INFO("文件索引数据库建立启动完成。");
+}
+
+/*
+ * Summary: 判断系统目录
+ * Parameters:
+ * const QString& path - 文件路径
+ * Return: bool
+ */
+bool FileSearchCore::isSystemDirectory(const QString& path) {
+    // 根据需要判断系统目录
+    // 例如，在 Windows 上，检查是否在 C:\Windows 或其他系统路径
+    LOG_INFO("Checking if directory is system: " + path);
+    return path.startsWith(QDir::rootPath() + "Windows") ||
+        path.startsWith(QDir::rootPath() + "Program Files") ||
+        path.startsWith(QDir::rootPath() + "Program Files (x86)");
 }
